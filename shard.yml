@@ -13,6 +13,8 @@ dependencies:
     github: trapped/sqlite_adapter.cr
   crotp:
     github: philnash/crotp
+  x11:
+    github: TamasSzekeres/x11-cr
 
 crystal: 0.26.1
 

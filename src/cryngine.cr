@@ -3,6 +3,7 @@ require "./cryngine/*"
 require "./cryngine/devices/*"
 require "./cryngine/display/*"
 require "./cryngine/system/*"
+require "logger"
 
 module Cryngine
   VERSION = "0.0.1"
