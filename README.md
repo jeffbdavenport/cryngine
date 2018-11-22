@@ -18,11 +18,10 @@ dependencies:
 require "cryngine"
 ```
 
-TODO: Write usage instructions here
 
 ## Development
 
-TODO: Write development instructions here
+See Contributing below
 
 ## Contributing
 
