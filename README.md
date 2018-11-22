@@ -1,6 +1,6 @@
 # cryngine
 
-TODO: Write a description here
+An advanced 3D game engine in development with the goal in mind of convention, speed, and high quality over configuration
 
 ## Installation
 
@@ -9,7 +9,7 @@ Add this to your application's `shard.yml`:
 ```yaml
 dependencies:
   cryngine:
-    github: your-github-user/cryngine
+    github: jeffreydvp/cryngine
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ TODO: Write development instructions here
 
 ## Contributing
 
-1. Fork it (<https://github.com/your-github-user/cryngine/fork>)
+1. Fork it (<https://github.com/jeffreydvp/cryngine/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
@@ -34,4 +34,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [your-github-user](https://github.com/your-github-user) Jeff Davenport - creator, maintainer
+- [jeffreydvp](https://github.com/jeffreydvp) Jeff Davenport - creator, maintainer
