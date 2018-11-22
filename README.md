@@ -1,6 +1,19 @@
 # cryngine
 
-An advanced 3D game engine in development with the goal in mind of convention, speed, and high quality over configuration
+An advanced free 3D game engine in development built on top of OpenGL. With the goal in mind of convention, speed, and high quality over configuration, as well as a means to serve as a solid alternative to production grade game engines.
+
+Conventions and beliefs in mind thus far
+
+- Engine will only be designed to work for Linux
+  - Designed for:
+    - ext4, X11, sqlite3, 
+- Gamers do not care most about graphics, they care about a game that runs well and has great Gameplay
+  - OpenGL is not as advanced as Direct X 12, however most of the features provided there, gamers will not miss.
+  - In my experience OpenGL has much better performance than Direct X
+  
+- Developers don't want to have to develop software to support multiple platforms such as MacOS, Windows, and Linux.
+  - Linux is free and anyone can install it. If they care about the game enough, they will try Linux.
+  - Most people using MacOS won't want to have to purchase Windows just to play the game, and most people on Windows won't want to have to pruchase a Mac just to play the game they want. But both of the two would consider installing Linux.
 
 ## Installation
 
