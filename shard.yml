@@ -1,0 +1,19 @@
+name: cryngine
+version: 0.0.1
+
+authors:
+  - Jeff Davenport <jeffreydvp@gmail.com>
+
+dependencies:
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+  active_record:
+    github: waterlink/active_record.cr
+  sqlite_adapter:
+    github: trapped/sqlite_adapter.cr
+  crotp:
+    github: philnash/crotp
+
+crystal: 0.26.1
+
+license: MIT
