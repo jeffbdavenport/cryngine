@@ -1,12 +1,10 @@
-require "lib_glfw"
+require "crystglfw"
 
 module Cryngine
   module Display
     module Window
-      def self.initialize!
+      def self.initialize!(title : String, monitor : Bool, share = nil, width = 640, height = 480)
         LibGLFW.init
-
-        width, height, title, monitor, share = 640, 480, "My First Window!", nil, nil
 
         # Create a window and its associated OpenGL context.
         window_handle = LibGLFW.create_window(width, height, title, monitor, share)
@@ -16,6 +14,7 @@ module Cryngine
           LibGLFW.swap_buffers(window_handle)
         end
 
+        sleep 5
         # Destroy the window along with its context.
         LibGLFW.destroy_window(window_handle)
 
