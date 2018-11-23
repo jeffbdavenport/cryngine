@@ -1,4 +1,11 @@
 module Cryngine
-  struct Authentication
+  module Server
+    module Authentication
+      extend self
+
+      def login
+        puts "Logged in"
+      end
+    end
   end
 end
