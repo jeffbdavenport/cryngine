@@ -1,10 +1,7 @@
 module Cryngine
   module Server
     module Authentication
-      extend self
-
-      def login
-        puts "Logged in"
+      def self.login
       end
     end
   end

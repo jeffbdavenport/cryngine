@@ -15,6 +15,9 @@ dependencies:
     github: philnash/crotp
   x11:
     github: TamasSzekeres/x11-cr
+  lib_glfw:
+    github: calebuharrison/LibGLFW
+    branch: master
 
 crystal: 0.26.1
 

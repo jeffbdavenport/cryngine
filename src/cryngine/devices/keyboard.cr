@@ -1,7 +1,6 @@
 module Cryngine
   module Devices
     module Keyboard
-      extend self
       alias X11 = Display::XModule
       alias X = X11::X
       LEFT      = X11::XK_Left
@@ -19,13 +18,13 @@ module Cryngine
       @@keyboard_buffer : Loop?
       @@keys_down_buffer : Loop?
 
-      def initialize
+      def self.initialize
         X11.initialize
         keyboard_buffer
         keys_down_buffer
       end
 
-      def keyboard_buffer
+      def self.keyboard_buffer
         @@keyboard_buffer ||= Loop.new(:keyboard_buffer) do
           ktype, kcode = X11.get_key
 
@@ -46,7 +45,7 @@ module Cryngine
         end
       end
 
-      def keys_down_buffer
+      def self.keys_down_buffer
         @@keys_down_buffer ||= Loop.new(:keys_down_buffer) do
           down = X11.keys_down[DOWN]
           up = X11.keys_down[UP]

@@ -1,54 +1,26 @@
+require "lib_glfw"
+
 module Cryngine
   module Display
-    struct Window
-      class_property windows = [] of Window
-      getter rows, cols, row, col
+    module Window
+      def self.initialize!
+        LibGLFW.init
 
-      def self.resize_terminal
-        rows, cols = 0, 0
-        windows.select(&.display?).each do |window|
-          rows = window.last_row if window.last_row > rows
-          cols = window.last_col if window.last_col > cols
+        width, height, title, monitor, share = 640, 480, "My First Window!", nil, nil
+
+        # Create a window and its associated OpenGL context.
+        window_handle = LibGLFW.create_window(width, height, title, monitor, share)
+
+        # Render new frames until the window should close.
+        until LibGLFW.window_should_close(window_handle)
+          LibGLFW.swap_buffers(window_handle)
         end
-        Terminal.resize_terminal(rows, cols)
-      end
 
-      def initialize(@rows : Int32, @cols : Int32, @row : Int32 = 1, @col : Int32 = 1, @hide = false, resize = true)
-        self.class.windows.push(self)
-        self.class.resize_terminal if resize
-      end
+        # Destroy the window along with its context.
+        LibGLFW.destroy_window(window_handle)
 
-      def top
-        @row
-      end
-
-      def left
-        @col
-      end
-
-      def hidden?
-        @hide
-      end
-
-      def display?
-        !@hide
-      end
-
-      # -1 to account for Terminal starting at 1 instead of 0
-      def row_buffer
-        row - 1
-      end
-
-      def col_buffer
-        col - 1
-      end
-
-      def last_row
-        rows + row_buffer
-      end
-
-      def last_col
-        cols + col_buffer
+        # Terminate GLFW
+        LibGLFW.terminate
       end
     end
   end
