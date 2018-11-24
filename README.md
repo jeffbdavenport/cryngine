@@ -4,12 +4,13 @@ An advanced free 3D game engine in development built on top of OpenGL. With the 
 
 Conventions and beliefs in mind thus far
 
-- Engine will only be designed to work for Linux
-  - Designed for:
-    - ext4, X11, sqlite3, 
-- Gamers do not care most about graphics, they care about a game that runs well and has great Gameplay
-  - OpenGL is not as advanced as Direct X 12, however most of the features provided there, gamers will not miss.
-  - In my experience OpenGL has much better performance than Direct X
+- Engine is designed and tested for:
+  - Vulkan, GLFW, sqlite3, Linux, X11, gdm3, Gnome-Shell-3, ext4
+  
+- Engine is not designed for:
+  - MacOS, Windows, Direct3D, Direct X
+  
+  * However if it eventually works with anything, we're fine with that.
   
 - Developers don't want to have to develop software to support multiple platforms such as MacOS, Windows, and Linux.
   - Linux is free and anyone can install it. If they care about the game enough, they will try Linux.
