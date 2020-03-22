@@ -5,5 +5,11 @@ module Cryngine
 
     class BlockCreateError < Exception
     end
+
+    class ObjectAddError < Exception
+    end
+
+    class ObjectNotFound < Exception
+    end
   end
 end
