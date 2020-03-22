@@ -16,14 +16,14 @@ module Cryngine
       def send(value : T)
         unless full?
           @queue << value
-          Scheduler.enqueue @receivers
+          Crystal::Scheduler.enqueue @receivers
           @receivers.clear
         end
         raise_if_closed
 
         unless empty?
           @senders << Fiber.current
-          Scheduler.reschedule
+          Crystal::Scheduler.reschedule
           raise_if_closed
         end
 
@@ -34,11 +34,11 @@ module Cryngine
         while empty?
           yield if @closed
           @receivers << Fiber.current
-          Scheduler.reschedule
+          Crystal::Scheduler.reschedule
         end
 
         @queue.shift.tap do
-          Scheduler.enqueue @senders
+          Crystal::Scheduler.enqueue @senders
           @senders.clear
         end
       end
@@ -56,7 +56,9 @@ module Cryngine
       end
 
       def empty?
-        @queue.empty?
+        queue = @queue
+        return true if queue.nil?
+        queue.empty?
       end
     end
   end

@@ -18,7 +18,7 @@ module Cryngine
 
       def initialize
         wm_delete_window = display.intern_atom(WM_DELETE_WINDOW_STR, false)
-        # grab_keyboard
+        grab_keyboard
         s = display.default_screen_number
 
         # fd.read_timeout = 1.nanosecond
@@ -28,10 +28,10 @@ module Cryngine
         # win = display.create_simple_window root_win, 10, 10, 400_u32, 300_u32, 1_u32, black_pix, white_pix
         win = root_win
 
-        display.select_input win,
-          ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
-          ExposureMask | EnterWindowMask | LeaveWindowMask |
-          KeyPressMask | KeyReleaseMask
+        # display.select_input win,
+        #   ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
+        #   ExposureMask | EnterWindowMask | LeaveWindowMask |
+        #   KeyPressMask | KeyReleaseMask
 
         display.map_window win
         display.set_wm_protocols win, [wm_delete_window]
@@ -47,24 +47,25 @@ module Cryngine
 
       def get_key
         loop do
-          while display.pending == 0
-            Fiber.yield
-          end
-          event = display.next_event
+          Fiber.yield
+          next if (event = display.check_mask_event(KeyPressMask | KeyReleaseMask)).nil?
           case event
           when KeyEvent
             kcode = event.lookup_keysym event.state & ShiftMask ? 1 : 0
             @@keys_down[kcode] ||= false
             case event.type
             when KeyRelease
-              if display.pending == 1
-                next_event = display.peek_event
-                if next_event.is_a?(KeyEvent) && next_event.time == event.time
-                  # Throw away repeat keys because the repeat delay changes based on OS
-                  display.next_event
-                  next
-                end
-              end
+              # if display.pending == 1
+              #   next_event = display.peek_event
+              #   if next_event.is_a?(KeyEvent) && next_event.time == event.time && next_event.type.is_a?(KeyPress)
+              #     next_kcode = next_event.lookup_keysym next_event.state & ShiftMask ? 1 : 0
+              #     if next_kcode == kcode
+              #       # Throw away repeat keys because the repeat delay changes based on OS
+              #       display.next_event
+              #       next
+              #     end
+              #   end
+              # end
               @@keys_down[kcode] = false
             when KeyPress
               case kcode
@@ -76,7 +77,6 @@ module Cryngine
             end
             return {event.type, kcode}
           else
-            Log.debug "#{event.class}"
             next
           end
         end
