@@ -1,3 +1,6 @@
+require "cryngine/display/xmodule"
+require "cryngine/system/loop"
+
 module Cryngine
   module Devices
     module Keyboard

@@ -1,7 +1,8 @@
+require "../listener"
 require "json"
 
 module Cryngine
-  class Server
+  class Server < Listener
     class Request
       getter message
 

@@ -1,4 +1,5 @@
 require "./listener"
+require "./client/response"
 
 module Cryngine
   class Client < Listener

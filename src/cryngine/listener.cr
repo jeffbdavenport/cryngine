@@ -1,11 +1,28 @@
 require "socket"
+require "msgpack"
+require "./message_pack"
 
 module Cryngine
-  class Listener
+  abstract class Listener
     getter host, port, socket
     getter socket = UDPSocket.new
 
     def initialize(@host : String, @port : Int32)
+    end
+
+    macro commands(commands)
+      def receive(request)
+        case request.message.command
+        {% for command in commands %}
+          when "{{command}}"
+            data = Command::{{command}}::Data.from_msgpack request.message.data
+            Log.info "Data Received: #{data.inspect}"
+            Command::{{command}}.call(request, data)
+        {% end %}
+        else
+          raise "Unknown command #{request.message.command}"
+        end
+      end
     end
 
     def listen

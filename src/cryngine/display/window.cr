@@ -1,3 +1,5 @@
+require "./terminal"
+
 module Cryngine
   module Display
     class Window
@@ -10,7 +12,7 @@ module Cryngine
         rows, cols = 0, 0
         windows.select(&.display?).each do |window|
           row_check = window.real_last_row
-          row_check += Loop.loops if Loop.display_loop_counts
+          # row_check += Loop.loops if Loop.display_loop_counts
           rows = row_check if row_check > rows
           cols = window.real_last_col if window.real_last_col > cols
         end

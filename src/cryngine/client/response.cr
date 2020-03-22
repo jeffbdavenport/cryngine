@@ -1,5 +1,7 @@
+require "../listener"
+
 module Cryngine
-  class Client
+  class Client < Listener
     class Response
       getter message
 

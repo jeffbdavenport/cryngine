@@ -1,6 +1,9 @@
+require "logger"
+
 module Cryngine
   module System
-    Log = Logger.new(File.new("debug.log", "w"))
+    class_property log_file : IO = STDOUT
+    Log = Logger.new(log_file)
     Log.level = Logger::DEBUG
     Log.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
       label = severity.unknown? ? "ANY" : severity.to_s

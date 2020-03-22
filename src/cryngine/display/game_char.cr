@@ -1,3 +1,5 @@
+require "./background"
+
 module Cryngine
   module Display
     alias AnyGameChar = GameChar | Background
@@ -14,6 +16,10 @@ module Cryngine
 
       def spaces
         " " * @spaces
+      end
+
+      def spaces_count
+        @spaces
       end
 
       def color_num

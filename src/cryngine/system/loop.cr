@@ -1,4 +1,6 @@
 module Cryngine
+  alias Loop = System::Loop
+
   module System
     class Loop
       include Display

@@ -1,3 +1,5 @@
+require "./msgp/message"
+
 struct MessagePack::Packer
   def write(value : BlackVeilServer::Object)
     write(value.attrs.to_h)

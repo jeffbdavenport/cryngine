@@ -1,3 +1,6 @@
+require "./listener"
+require "./server/request"
+
 module Cryngine
   class Server < Listener
     def listen

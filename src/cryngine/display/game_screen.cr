@@ -1,4 +1,6 @@
 require "./screen_buffer"
+require "./window"
+require "./game_char"
 
 module Cryngine
   module Display
