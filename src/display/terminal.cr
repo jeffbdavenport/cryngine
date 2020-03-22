@@ -30,29 +30,24 @@ module Cryngine
         STRIKE_THROUGH
       end
 
-      @@cols : Int32?
-      @@rows : Int32?
-
       class_getter to_print = [] of String | Char
 
       def resize_terminal(rows, cols)
         clear_screen
         print "\e[8;#{rows};#{cols}t"
-        @@cols = cols
-        @@rows = rows
         sleep WINDOW_DELAY
       end
 
       def cols
-        @@cols ||= `tput cols`.to_i
+        `tput cols`.to_i
       end
 
       def rows
-        @@rows ||= `tput lines`.to_i
+        `tput lines`.to_i
       end
 
       def clear_screen
-        print "#{CLEAR}"
+        # print "#{CLEAR}"
         `clear`
         print "\e[3J"
       end
@@ -76,7 +71,7 @@ module Cryngine
       def color256(background = false, color = 1, dec : Enum? = nil)
         raise "Invalid color" unless (0..255).covers?(color)
         ground = background ? '4' : '3'
-        format("#{ground}8;5;#{color}#{decoration(dec)}")
+        format("#{ground}8;5;#{color.to_s}#{decoration(dec)}")
       end
 
       def decoration(decoration : Enum?)
