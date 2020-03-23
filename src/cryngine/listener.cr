@@ -1,6 +1,5 @@
 require "socket"
 require "msgpack"
-require "./message_pack"
 
 module Cryngine
   abstract class Listener
@@ -20,7 +19,11 @@ module Cryngine
             Command::{{command}}.call(request, data)
         {% end %}
         else
-          raise "Unknown command #{request.message.command}"
+          if request.is_a?(Server::Request)
+            Log.info "Unknown command #{request.message.command}"
+          else
+            raise "Unknown command #{request.message.command}"
+          end
         end
       end
     end
@@ -51,6 +54,12 @@ module Cryngine
 
     def authorize(request)
       request.authorized!
+    end
+  end
+
+  # For compiling
+  class Server < Listener
+    class Request
     end
   end
 end

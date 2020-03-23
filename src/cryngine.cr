@@ -1,15 +1,7 @@
-require "./cryngine/*"
-require "./cryngine/devices/*"
-require "./cryngine/display/*"
-require "./cryngine/system/*"
-require "./cryngine/server/*"
-require "./cryngine/client/*"
-require "./cryngine/msgpack/*"
+require "cryngine/exceptions"
 
 module Cryngine
   VERSION = "0.1.0"
-  Log     = System::Log
-  alias Loop = System::Loop
 
   module Display
   end
@@ -18,11 +10,5 @@ module Cryngine
   end
 
   module System
-  end
-
-  class Server
-  end
-
-  class Client
   end
 end

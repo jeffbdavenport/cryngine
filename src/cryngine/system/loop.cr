@@ -1,3 +1,5 @@
+require "cryngine/display/screen_buffer"
+
 module Cryngine
   alias Loop = System::Loop
 

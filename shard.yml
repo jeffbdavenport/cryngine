@@ -15,8 +15,6 @@ dependencies:
     github: philnash/crotp
   x11:
     github: TamasSzekeres/x11-cr
-  crystglfw:
-    github: calebuharrison/CrystGLFW
 
 crystal: 0.26.1
 

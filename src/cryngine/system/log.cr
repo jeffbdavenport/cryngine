@@ -1,6 +1,8 @@
 require "logger"
 
 module Cryngine
+  Log = System::Log
+
   module System
     class_property log_file : IO = STDOUT
     Log = Logger.new(log_file)

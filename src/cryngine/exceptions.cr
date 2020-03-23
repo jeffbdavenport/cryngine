@@ -11,5 +11,8 @@ module Cryngine
 
     class ObjectNotFound < Exception
     end
+
+    class ShardExists < Exception
+    end
   end
 end

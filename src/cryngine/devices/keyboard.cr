@@ -37,7 +37,7 @@ module Cryngine
                       when X11::KeyRelease
                         :key_release
                       end
-          Log.debug "#{type_name}, code: #{kcode}"
+          # Log.debug "#{type_name}, code: #{kcode}"
 
           case ktype
           when X11::KeyPress

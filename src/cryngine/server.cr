@@ -15,5 +15,9 @@ module Cryngine
     def send(message : Slice(UInt8), address)
       @socket.send(message, address)
     end
+
+    def handle_error(error)
+      Log.info error
+    end
   end
 end

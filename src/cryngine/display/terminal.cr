@@ -1,3 +1,6 @@
+require "./terminal/window"
+require "./terminal/color"
+
 module Cryngine
   module Display
     module Terminal
