@@ -10,8 +10,6 @@ Conventions and beliefs in mind thus far
 - Engine is not designed for:
   - MacOS, Windows, Direct3D, Direct X
   
-  * However if it eventually works with anything, we're fine with that.
-  
 - Developers don't want to have to develop software to support multiple platforms such as MacOS, Windows, and Linux.
   - Linux is free and anyone can install it. If they care about the game enough, they will try Linux.
   - Most people using MacOS won't want to have to purchase Windows just to play the game, and most people on Windows won't want to have to pruchase a Mac just to play the game they want. But both of the two would consider installing Linux.
