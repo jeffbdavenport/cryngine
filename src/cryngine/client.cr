@@ -2,6 +2,8 @@ require "./listener"
 require "./client/response"
 
 module Cryngine
+  alias RequestType = Client::Response
+
   class Client < Listener
     def listen
       Log.info "Connecting to #{@host}:#{@port} with #{@socket.class}"
@@ -12,8 +14,8 @@ module Cryngine
       end
     end
 
-    def send(message : Slice(UInt8))
-      @socket.send(message)
+    def send(command : String, data)
+      @socket.send({command: command, data: data.to_msgpack}.to_msgpack)
     end
 
     def handle_error(error)

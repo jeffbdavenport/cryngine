@@ -22,9 +22,9 @@ module Cryngine
         @address.to_s.split(':').last.to_i
       end
 
-      def send(message : Slice(UInt8))
+      def send(command : String, data)
         # unless @responded
-        @responded = true if @server.send(message, @address)
+        @responded = true if @server.send(command, data, @address)
         # end
       end
 

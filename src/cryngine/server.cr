@@ -2,6 +2,8 @@ require "./listener"
 require "./server/request"
 
 module Cryngine
+  alias RequestType = Server::Request
+
   class Server < Listener
     def listen
       System::Log.info "Binding port #{@port} for #{@socket.class} on #{@host}"
@@ -12,8 +14,8 @@ module Cryngine
       end
     end
 
-    def send(message : Slice(UInt8), address)
-      @socket.send(message, address)
+    def send(command : String, data, address)
+      @socket.send({command: command, data: data.to_msgpack}.to_msgpack, address)
     end
 
     def handle_error(error)

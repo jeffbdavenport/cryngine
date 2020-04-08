@@ -8,8 +8,8 @@ module Cryngine
       def initialize(@client : Client, @message : MSGP::Message)
       end
 
-      def send(message)
-        @client.send(message)
+      def send(command : String, data)
+        @client.send(command, data)
       end
 
       # Sets the sender to be authorized

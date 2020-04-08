@@ -26,11 +26,10 @@ module Cryngine
         BACKWARD
       end
 
-      TEXT = [1, 4, 9]
       enum DEC
-        BOLD
-        UNDERLINE
-        STRIKE_THROUGH
+        BOLD           = 1
+        UNDERLINE      = 4
+        STRIKE_THROUGH = 9
       end
 
       @@cols : Int32?
@@ -73,19 +72,13 @@ module Cryngine
                  else
                    background ? '4' : '3'
                  end
-        format("#{ground}#{color}#{decoration(dec)}")
+        format("#{ground}#{color}#{dec}")
       end
 
       def color256(background = false, color = 1, dec : Enum? = nil)
         raise "Invalid color" unless (0..255).covers?(color)
         ground = background ? '4' : '3'
-        format("#{ground}8;5;#{color}#{decoration(dec)}")
-      end
-
-      def decoration(decoration : Enum?)
-        return if decoration.nil?
-        raise "Invalid decoration" unless TEXT[decoration]
-        decoration = ";#{TEXT[decoration.to_i]}"
+        format("#{ground}8;5;#{color}#{dec}")
       end
 
       def cursor(str : String, i = nil)

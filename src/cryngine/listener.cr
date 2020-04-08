@@ -14,9 +14,10 @@ module Cryngine
         case request.message.command
         {% for command in commands %}
           when "{{command}}"
-            data = Command::{{command}}::Data.from_msgpack request.message.data
+            data = Commands::{{command}}::Data.from_msgpack request.message.data
             Log.info "Data Received: #{data.inspect}"
-            Command::{{command}}.call(request, data)
+            controller = Commands::{{command}}.new(request)
+            controller.call(data)
         {% end %}
         else
           if request.is_a?(Server::Request)
