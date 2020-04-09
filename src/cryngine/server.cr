@@ -2,16 +2,33 @@ require "./listener"
 require "./server/request"
 
 module Cryngine
-  alias RequestType = Server::Request
-
   class Server < Listener
-    def listen
+    macro commands(commands)
+      ->(request : Cryngine::Server::Request) do
+        case request.message.command
+        {% for command in commands %}
+          when "{{command}}"
+            data = Commands::{{command}}::Data.from_msgpack request.message.data
+            Log.info "Data Received: #{data.inspect}"
+            controller = Commands::{{command}}.new(request)
+            controller.call(data)
+        {% end %}
+        else
+          Log.info "Unknown command #{request.message.command}"
+        end
+      end
+    end
+
+    def listen(proc)
       System::Log.info "Binding port #{@port} for #{@socket.class} on #{@host}"
       @socket.bind(@host, @port)
 
-      super do |message, address|
-        yield Request.new(self, message, address)
+      spawn do
+        super() do |message, address|
+          proc.call Request.new(self, message, address)
+        end
       end
+      Fiber.yield
     end
 
     def send(command : String, data, address)

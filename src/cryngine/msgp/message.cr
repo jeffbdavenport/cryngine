@@ -6,7 +6,6 @@ module Cryngine
       include MessagePack::Serializable
 
       property command : String
-      property sub : String
       property data : Slice(UInt8)
     end
   end
