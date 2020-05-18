@@ -2,6 +2,8 @@ require "socket"
 require "msgpack"
 
 module Cryngine
+  alias AnyRequest = Server::Request | Client::Response
+
   abstract class Listener
     getter host, port, socket
     getter socket = UDPSocket.new

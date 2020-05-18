@@ -34,9 +34,5 @@ module Cryngine
     def send(command : String, data, address)
       @socket.send({command: command, data: data.to_msgpack}.to_msgpack, address)
     end
-
-    def handle_error(error)
-      Log.info error
-    end
   end
 end
