@@ -9,7 +9,7 @@ module Cryngine
         {% for command in commands %}
           when "{{command}}"
             data = Commands::{{command}}::Data.from_msgpack request.message.data
-            Log.info "Data Received: #{data.inspect}"
+            Log.info { "Data Received: #{data.inspect}" }
             controller = Commands::{{command}}.new(request)
             controller.call(data)
         {% end %}
@@ -20,7 +20,7 @@ module Cryngine
     end
 
     def listen(proc)
-      Log.info "Connecting to #{@host}:#{@port} with #{@socket.class}"
+      Log.info { "Connecting to #{@host}:#{@port} with #{@socket.class}" }
       @socket.connect(@host, @port)
 
       spawn do

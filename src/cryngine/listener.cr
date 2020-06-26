@@ -15,11 +15,11 @@ module Cryngine
       while !socket.closed?
         message, address = socket.receive(1024)
         message = MSGP::Message.from_msgpack message
-        Log.info "From #{address}: Command #{message.command}"
+        Log.info { "From #{address}: Command #{message.command}" }
         yield(message, address)
         # authorize(request)
       end
-      Log.error "#{self.class} closed!"
+      Log.error { "#{self.class} closed!" }
     end
 
     private def authorize(request)

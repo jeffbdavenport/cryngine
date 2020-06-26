@@ -9,18 +9,18 @@ module Cryngine
         {% for command in commands %}
           when "{{command}}"
             data = Commands::{{command}}::Data.from_msgpack request.message.data
-            Log.info "Data Received: #{data.inspect}"
+            Log.info { "Data Received: #{data.inspect}" }
             controller = Commands::{{command}}.new(request)
             controller.call(data)
         {% end %}
         else
-          Log.info "Unknown command #{request.message.command}"
+          Log.info { "Unknown command #{request.message.command}" }
         end
       end
     end
 
     def listen(proc)
-      System::Log.info "Binding port #{@port} for #{@socket.class} on #{@host}"
+      Log.info { "Binding port #{@port} for #{@socket.class} on #{@host}" }
       @socket.bind(@host, @port)
 
       spawn do
@@ -33,6 +33,10 @@ module Cryngine
 
     def send(command : String, data, address)
       @socket.send({command: command, data: data.to_msgpack}.to_msgpack, address)
+    end
+
+    def handle_error(error)
+      Log.info { error }
     end
   end
 end
