@@ -71,7 +71,7 @@ module Cryngine
               case kcode
               # Quit buttons
               when XK_Escape, XK_Q
-                BlackVeil.cleanup { }
+                cleanup { }
               end
               @@keys_down[kcode] = true
             end
@@ -85,6 +85,14 @@ module Cryngine
       def close_display
         ungrab_keyboard
         X.close_display(display)
+      end
+
+      def self.cleanup(error = nil)
+        print Terminal.reset_cursor
+        # Terminal.clear_screen
+        XModule.close_display
+        yield
+        exit
       end
     end
   end
