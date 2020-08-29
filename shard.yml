@@ -5,8 +5,8 @@ authors:
   - Jeff Davenport <jeffreydvp@gmail.com>
 
 dependencies:
-  active_record:
-    github: waterlink/active_record.cr
+  granite:
+    github: amberframework/granite
 
 crystal: 0.26.1
 
