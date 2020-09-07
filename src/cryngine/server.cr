@@ -3,18 +3,23 @@ require "./server/request"
 
 module Cryngine
   class Server < Listener
-    macro commands(commands)
+    macro commands(commands, commands_enum, execute)
       ->(request : Cryngine::Server::Request) do
-        case request.message.command
+        command, remaining = request.message.split('#')
+        command = {{commands_enum}}.new(command.to_i)
+        Log.info { "From #{request.address}: Command #{command}" }
+        case command.value
         {% for command in commands %}
-          when "{{command}}"
-            data = Commands::{{command}}::Data.from_msgpack request.message.data
+          when {{commands_enum}}::{{command}}.value
+            model, data = {{execute}}.parse_data remaining
+            if model.nil? || data.nil?
+              Log.error { "Model is nil" }
+              return
+            end
             Log.info { "Data Received: #{data.inspect}" }
-            controller = Commands::{{command}}.new(request)
-            controller.call(data)
+            controller = {{execute}}::{{command}}.new(request)
+            controller.call(model, data)
         {% end %}
-        else
-          Log.info { "Unknown command #{request.message.command}" }
         end
       end
     end
@@ -31,8 +36,20 @@ module Cryngine
       Fiber.yield
     end
 
-    def send(command : String, data, address)
-      @socket.send({command: command, data: data.to_msgpack}.to_msgpack, address)
+    def send(data, address)
+      @socket.send(data, address)
+    end
+
+    def convert_int(int)
+      bytes = nil
+      case int
+      when Int64
+        bytes = Bytes[2, 0, 1, 0, int.bits(0..7), int.bits(8..15), int.bits(16..23), int.bits(24..31), int.bits(32..39), int.bits(40..47), int.bits(48..55), int.bits(56..63)]
+      else
+        bytes = Bytes[2, 0, 0, 0, int.bits(0..7), int.bits(8..15), int.bits(16..23), int.bits(24..31)]
+      end
+      puts bytes.to_s
+      bytes
     end
 
     def handle_error(error)
