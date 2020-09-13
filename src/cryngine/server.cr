@@ -5,20 +5,28 @@ module Cryngine
   class Server < Listener
     macro commands(commands, commands_enum, execute)
       ->(request : Cryngine::Server::Request) do
+        unless request.message.includes?('#')
+          raise ArgumentError.new("Requests must start with a Command ID")
+        end
         command, remaining = request.message.split('#')
         command = {{commands_enum}}.new(command.to_i)
         Log.info { "From #{request.address}: Command #{command}" }
         case command.value
         {% for command in commands %}
           when {{commands_enum}}::{{command}}.value
-            model, data = {{execute}}.parse_data remaining
-            if model.nil? || data.nil?
-              Log.error { "Model is nil" }
-              return
-            end
-            Log.info { "Data Received: #{data.inspect}" }
             controller = {{execute}}::{{command}}.new(request)
-            controller.call(model, data)
+            begin
+              model, data = {{execute}}.parse_data remaining
+              if model.nil? || data.nil?
+                Log.error { "Model is nil" }
+                return
+              end
+              Log.info { "Data Received: #{data.inspect}" }
+              controller.call(model, data)
+            rescue error
+              Log.error { "#{error}\n#{error.backtrace.join("\n")}" }
+              controller.send(false)
+            end
         {% end %}
         end
       end
