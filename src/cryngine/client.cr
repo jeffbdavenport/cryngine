@@ -3,9 +3,15 @@ require "./client/response"
 
 module Cryngine
   class Client < Listener
-    macro commands(commands)
+    macro commands(commands, commands_enum, execute)
       ->(request : Cryngine::Client::Response) do
-        case request.message.command
+        unless request.message.includes?('#')
+          raise ArgumentError.new("Requests must start with a Command ID")
+        end
+        command, remaining = request.message.split('#')
+        command = {{commands_enum}}.new(command.to_i)
+        Log.info { "From #{request.address}: Command #{command}" }
+        case command.value
         {% for command in commands %}
           when "{{command}}"
             data = Commands::{{command}}::Data.from_msgpack request.message.data
