@@ -133,6 +133,8 @@ module Cryngine
         error = LibSDL.render_read_pixels(renderer, pointerof(rect), format.format, surface.value.pixels, surface.value.pitch)
         s = Surface.new(surface)
         s.save_bmp("dithered.bmp")
+        puts `time convert -resize 4500x2500 -filter Box -remap assets/color_palettes/OC.png -dither Floyd-Steinberg dithered.bmp dithered.png`
+        texture = load_img_texture("dithered.png")
 
         renderer.clear
 
@@ -155,7 +157,6 @@ module Cryngine
 
         if true # LibMagick.magickReadImageBlob wand, pixels, pixels.size
           # LibMagick.magickWriteImage wand, "dithered.png"
-          puts `time convert -resize 4500x2500 -filter Box -remap assets/color_palettes/OC.png -dither Floyd-Steinberg dithered.bmp dithered.png`
           # magnify = 2.5
           # puts (window.width * magnify).to_i
           # puts (window.height * magnify).to_i
@@ -194,7 +195,6 @@ module Cryngine
         #   SDL::Error.new("Unable to load image")
         # end
         # texture = LibSDL.create_texture_from_surface(renderer, surface)
-        texture = load_img_texture("dithered.png")
         start_x = -1500
         start_y = -500
 
