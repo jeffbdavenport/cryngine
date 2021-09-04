@@ -9,7 +9,13 @@ dependencies:
     github: amberframework/granite
   msgpack:
     github: crystal-community/msgpack-crystal
+  sdl:
+    path: /home/jeff/projects/sdl.cr
+  magickwand-crystal:
+    github: blocknotes/magickwand-crystal
+    # vulkan:
+    #   path: /home/jeff/projects/vulkan.cr
 
-crystal: 0.26.1
+crystal: 1.1.1
 
 license: MIT

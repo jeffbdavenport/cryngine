@@ -8,7 +8,7 @@ module Cryngine
       def initialize(@client : Client, @message : MSGP::Message)
       end
 
-      def send(command : String, data)
+      def send(command : Int16, data)
         @client.send(command, data)
       end
 

@@ -18,7 +18,7 @@ module Cryngine
         @window = Window.new(rows, cols, row_offset, col_offset, hide, true, @char_padding)
         self.top_border = false
         @fill_background = fill_game_screen(@background)
-        ScreenBuffer.puts(border + fill_background + Terminal.reset_cursor)
+        Terminal::ScreenBuffer.puts(border + fill_background + Terminal.reset_cursor)
       end
 
       def hide=(hide)

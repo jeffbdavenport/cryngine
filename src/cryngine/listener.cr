@@ -14,7 +14,7 @@ module Cryngine
     def listen
       while !socket.closed?
         message, address = socket.receive(1024)
-        puts "FROM GODOT: #{message}"
+        message = Cryngine::MSGP::Message.from_msgpack message
         yield(message, address)
         # authorize(request)
       end

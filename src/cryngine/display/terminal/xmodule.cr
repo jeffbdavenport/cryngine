@@ -55,17 +55,17 @@ module Cryngine
             @@keys_down[kcode] ||= false
             case event.type
             when KeyRelease
-              # if display.pending == 1
-              #   next_event = display.peek_event
-              #   if next_event.is_a?(KeyEvent) && next_event.time == event.time && next_event.type.is_a?(KeyPress)
-              #     next_kcode = next_event.lookup_keysym next_event.state & ShiftMask ? 1 : 0
-              #     if next_kcode == kcode
-              #       # Throw away repeat keys because the repeat delay changes based on OS
-              #       display.next_event
-              #       next
-              #     end
-              #   end
-              # end
+              if display.pending == 1
+                next_event = display.peek_event
+                if next_event.is_a?(KeyEvent) && next_event.time == event.time && next_event.type.is_a?(KeyPress)
+                  next_kcode = next_event.lookup_keysym next_event.state & ShiftMask ? 1 : 0
+                  if next_kcode == kcode
+                    # Throw away repeat keys because the repeat delay changes based on OS
+                    display.next_event
+                    next
+                  end
+                end
+              end
               @@keys_down[kcode] = false
             when KeyPress
               case kcode

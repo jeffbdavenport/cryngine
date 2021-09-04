@@ -1,12 +1,13 @@
+require "../msgp/message"
 require "../listener"
 require "json"
 
 module Cryngine
   class Server < Listener
     class Request
-      getter message : String
+      getter message : Cryngine::MSGP::Message
 
-      def initialize(@server : Server, @message : String, @address : Socket::Address)
+      def initialize(@server : Server, @message : Cryngine::MSGP::Message, @address : Socket::Address)
         @responded = false
       end
 
@@ -22,9 +23,9 @@ module Cryngine
         @address.to_s.split(':').last.to_i
       end
 
-      def send(data)
+      def send(command : Enum, data)
         # unless @responded
-        @responded = true if @server.send(data, @address)
+        @responded = true if @server.send({c: command.value.to_u8, d: data.to_msgpack}.to_msgpack, @address)
         # end
       end
 

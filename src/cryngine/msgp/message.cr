@@ -5,7 +5,7 @@ module Cryngine
     class Message
       include MessagePack::Serializable
 
-      property c : Int16
+      property c : UInt8
       property d : Slice(UInt8)
     end
   end

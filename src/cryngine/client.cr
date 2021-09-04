@@ -3,24 +3,26 @@ require "./client/response"
 
 module Cryngine
   class Client < Listener
-    macro commands(commands, commands_enum, execute)
+    macro commands(commands)
+#, commands_enum, execute)
       ->(request : Cryngine::Client::Response) do
-        unless request.message.includes?('#')
-          raise ArgumentError.new("Requests must start with a Command ID")
-        end
-        command, remaining = request.message.split('#')
-        command = {{commands_enum}}.new(command.to_i)
-        Log.info { "From #{request.address}: Command #{command}" }
-        case command.value
+        # unless request.message.includes?('#')
+        #   raise ArgumentError.new("Requests must start with a Command ID")
+        # end
+        # command, remaining = request.message.split('#')
+        # command = { {commands_enum}}.new(request.message.command)
+        # Log.info { "From #{request.address}: Command #{command}" }
+
+        case request.message.c
         {% for command in commands %}
-          when "{{command}}"
-            data = Commands::{{command}}::Data.from_msgpack request.message.data
+          when Commands::List::{{command}}.value
+            data = {{command}}::Data.from_msgpack request.message.d
             Log.info { "Data Received: #{data.inspect}" }
-            controller = Commands::{{command}}.new(request)
+            controller = {{command}}.new(request)
             controller.call(data)
         {% end %}
         else
-          raise "Unknown command #{request.message.command}"
+          raise "Unknown command #{request.message.c}"
         end
       end
     end
@@ -37,8 +39,8 @@ module Cryngine
       Fiber.yield
     end
 
-    def send(command : String, data)
-      @socket.send({command: command, data: data.to_msgpack}.to_msgpack)
+    def send(command : Enum, data)
+      @socket.send({c: command.value.to_u8, d: data.to_msgpack}.to_msgpack)
     end
 
     def handle_error(error)

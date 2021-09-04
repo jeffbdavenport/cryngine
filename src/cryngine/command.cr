@@ -14,21 +14,25 @@ module Cryngine
     def initialize(@connection : Server::Request)
     end
 
-    def send(enum_value : Enum)
-      @connection.send(enum_value.value.to_i.to_s)
-    end
+    # def send(enum_value : Enum)
+    #   @connection.send(enum_value.value.to_i.to_s)
+    # end
 
-    def send(bool : Bool)
-      if bool
-        send = Result::Success
-      else
-        send = Result::Failed
-      end
-      @connection.send(send.value.to_i.to_s)
-    end
+    # def send(bool : Bool)
+    #   if bool
+    #     send = Result::Success
+    #   else
+    #     send = Result::Failed
+    #   end
+    #   @connection.send(send.value.to_i.to_s)
+    # end
 
-    def send(data : String)
-      @connection.send(data)
+    # def send(data : String)
+    #   @connection.send(data)
+    # end
+
+    def send(command : Enum, data)
+      @connection.send(command, data)
     end
   end
 

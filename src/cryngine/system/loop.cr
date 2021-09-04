@@ -1,5 +1,5 @@
-require "cryngine/display/screen_buffer"
-require "cryngine/display/terminal"
+require "cryngine/display/terminal/screen_buffer"
+require "cryngine/display/terminal/terminal"
 
 module Cryngine
   alias Loop = System::Loop
@@ -12,6 +12,7 @@ module Cryngine
       class_getter loops = 0
       getter channel : Channel(String)?
       @index = 0
+      class_property start_time = Time.monotonic
 
       def initialize(channel : Symbol? = nil, wait : Bool = true, count = nil, &block)
         @channel = Channel(String).new unless channel.nil?
@@ -29,10 +30,15 @@ module Cryngine
                      count.times
                    end
         update_status = "#{channel}#{" " * (25 - channel.to_s.size)}"
+        last_print_time = Time.monotonic
+
         iterator.each do |i|
+          elapsed_seconds = (Time.monotonic - start_time)
+          print_elapsed = Time.monotonic - last_print_time
           # Make sure window has been resized before showing loop_counts
-          if display_loop_counts && (ScreenBuffer.buffer.has_key?(:update) || channel == :update)
-            ScreenBuffer.buffer[channel] = "#{Terminal.reset_cursor(index)}#{update_status}#{i}"
+          if display_loop_counts && (print_elapsed.to_i > 1) # && (Terminal::ScreenBuffer.buffer.has_key?(:update) || channel == :update)
+            last_print_time = Time.monotonic
+            Terminal::ScreenBuffer.buffer[channel] = "#{Terminal.reset_cursor(index - 7)}#{update_status}#{(i / elapsed_seconds.to_i).to_i}"
           end
           block.call
           # Only set wait to false if you will be customizing where the block yields

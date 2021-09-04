@@ -1,5 +1,6 @@
-require "./terminal/window"
-require "./terminal/color"
+require "./window"
+require "./terminal_window"
+require "./color"
 
 module Cryngine
   module Display
