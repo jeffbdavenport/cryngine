@@ -20,8 +20,8 @@ module Cryngine
           # end
           @chunks.push Chunk.new(
             data: data,
-            x: (chunk["x"].as_i / Chunk.width).to_i,
-            y: (chunk["y"].as_i / Chunk.height).to_i
+            x: (chunk["x"].as_i / Chunk.width).to_i16,
+            y: (chunk["y"].as_i / Chunk.height).to_i16
           )
         end
       end

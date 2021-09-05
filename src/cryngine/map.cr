@@ -16,6 +16,14 @@ module Cryngine
     class_getter isometric = true
     class_property scale = 1.0
 
+    def self.scaled_tile_width
+      (tile_width * scale).to_i
+    end
+
+    def self.scaled_tile_height
+      (tile_height * scale).to_i
+    end
+
     def self.load_map(name : String)
       json = File.open("#{path}#{name}.json") do |file|
         JSON.parse(file)
