@@ -5,14 +5,14 @@ module Cryngine
     class DitherTool
       getter wand : Pointer(LibMagick::MagickWand)
       getter dither_wand : Pointer(LibMagick::MagickWand)
+      class_property dither_colors_image : String = "lib/cryngine/assets/OC.png"
       @wand = uninitialized Pointer(LibMagick::MagickWand)
       @dither_wand = uninitialized Pointer(LibMagick::MagickWand)
+      LibMagick.magickWandGenesis
 
-      def initialize(colors_image : String)
-        LibMagick.magickWandGenesis
-        @wand = LibMagick.newMagickWand
+      def initialize(@wand = LibMagick.newMagickWand)
         @dither_wand = LibMagick.newMagickWand
-        LibMagick.magickReadImage @dither_wand, colors_image
+        LibMagick.magickReadImage @dither_wand, self.class.dither_colors_image
       end
 
       def load_image(pixels : Bytes)
@@ -37,6 +37,10 @@ module Cryngine
       def cleanup
         LibMagick.destroyMagickWand @wand        # lib deinit
         LibMagick.destroyMagickWand @dither_wand # lib deinit
+      end
+
+      def self.cleanup
+        # LibMagick.destroyMagickWand @dither_wand # lib deinit
         LibMagick.magickWandTerminus
       end
 
@@ -44,9 +48,7 @@ module Cryngine
         LibMagick.magickSetImageFormat @wand, "BMP"
         buffer = LibMagick.magickGetImageBlob @wand, out length
         # puts "#{buffer.class}, #{length}"
-        bytes = Bytes.new(buffer, length)
-        yield(bytes)
-        LibMagick.magickRelinquishMemory buffer
+        Bytes.new(buffer, length)
       end
     end
   end

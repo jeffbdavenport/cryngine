@@ -1,5 +1,3 @@
-require "./window"
-require "./terminal_window"
 require "./color"
 
 module Cryngine

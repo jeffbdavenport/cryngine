@@ -1,4 +1,3 @@
-require "cryngine/display/terminal/screen_buffer"
 require "cryngine/display/terminal/terminal"
 
 module Cryngine
@@ -7,49 +6,65 @@ module Cryngine
   module System
     class Loop
       include Display
-      class_property display_loop_counts = false
+      class_property per_second = true
       class_getter update_channel = Channel(String).new
       class_getter loops = 0
       getter channel : Channel(String)?
+      class_property buffer = {} of String => String
       @index = 0
-      class_property start_time = Time.monotonic
+      @@display_loop_counts = false
 
-      def initialize(channel : Symbol? = nil, wait : Bool = true, count = nil, &block)
-        @channel = Channel(String).new unless channel.nil?
-        @@loops += 1
-        @index = @@loops
+      def self.counts
+        @@display_loop_counts = true
         spawn do
-          self.class.game_loop(channel, @index, count, wait, &block)
+          loop do
+            print "#{buffer.values.join}#{Terminal.reset_cursor}"
+            sleep 100.milliseconds
+          end
         end
       end
 
-      def self.game_loop(channel : Symbol, index : Int32, count = nil, wait : Bool = true, &block)
-        iterator = if count.nil?
-                     1.step
-                   else
-                     count.times
-                   end
-        update_status = "#{channel}#{" " * (25 - channel.to_s.size)}"
+      def initialize(channel : Symbol | String | Nil = nil, wait : Bool = true, same_thread = false, &block)
+        @channel = Channel(String).new unless channel.nil?
+        @@loops += 1
+        @index = @@loops
+        if same_thread
+          spawn same_thread: true do
+            self.class.game_loop(channel, @index, wait, &block)
+          end
+        else
+          spawn do
+            self.class.game_loop(channel, @index, wait, &block)
+          end
+        end
+      end
+
+      # per_second : Displays loop iterations each second
+      # wait : True if the loop should yield to other fibers
+      def self.game_loop(channel : Symbol | String, index : Int32, wait : Bool = true, &block)
+        per_second = @@per_second
+        display_loop_counts = @@display_loop_counts
+        iterator = 0
+        update_status = "#{channel}#{" " * (45 - channel.to_s.size)}"
         last_print_time = Time.monotonic
 
-        iterator.each do |i|
-          elapsed_seconds = (Time.monotonic - start_time)
+        if display_loop_counts
+          buffer[channel.to_s] = "#{Terminal.reset_cursor(Terminal.rows - index)}#{update_status}#{iterator}#{" " * 100}"
+        end
+        loop do
           print_elapsed = Time.monotonic - last_print_time
           # Make sure window has been resized before showing loop_counts
-          if display_loop_counts && (print_elapsed.to_i > 1) # && (Terminal::ScreenBuffer.buffer.has_key?(:update) || channel == :update)
+          if display_loop_counts && (!per_second || (print_elapsed.to_i > 1))
             last_print_time = Time.monotonic
-            Terminal::ScreenBuffer.buffer[channel] = "#{Terminal.reset_cursor(index - 7)}#{update_status}#{(i / elapsed_seconds.to_i).to_i}"
+            buffer[channel.to_s] = "#{Terminal.reset_cursor(Terminal.rows - index)}#{update_status}#{iterator}#{" " * 100}"
+            iterator = 0 if per_second
           end
           block.call
           # Only set wait to false if you will be customizing where the block yields
           Fiber.yield if wait
+          # sleep 10.second
+          iterator += 1
         end
-      end
-
-      def self.update_loop(count = nil, wait : Bool = true, &block)
-        @@loops += 1
-        Display::Window.resize_terminal
-        game_loop(:update, loops, count, wait, &block)
       end
     end
   end

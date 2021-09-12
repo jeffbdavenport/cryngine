@@ -12,7 +12,7 @@ dependencies:
   sdl:
     path: /home/jeff/projects/sdl.cr
   magickwand-crystal:
-    github: blocknotes/magickwand-crystal
+    path: /home/jeff/projects/magickwand-crystal
     # vulkan:
     #   path: /home/jeff/projects/vulkan.cr
 

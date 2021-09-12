@@ -6,20 +6,20 @@ module Cryngine
       module ScreenBuffer
         extend self
         class_property buffer_channel = Channel(String).new
-        class_property buffer = {} of Symbol => String
+        class_property buffer = {} of String => String
         @@ephemeral_buffer = ""
         # How long to wait before printing again
         PRINT_DELAY = 50.milliseconds
 
         def initialize
-          Loop.new(:buffer, false) do
+          Loop.new(:loop_counts, false) do
             sleep PRINT_DELAY
             print "#{ephemeral_buffer}#{buffer.values.join}#{Terminal.reset_cursor}"
           end
 
-          Loop.new(:channel) do
-            puts buffer_channel.receive
-          end
+          # Loop.new(:channel) do
+          #   puts buffer_channel.receive
+          # end
         end
 
         def puts(string : String)
