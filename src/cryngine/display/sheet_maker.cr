@@ -100,10 +100,10 @@ module Cryngine
           Log.debug { "DO - RENDERING #{col},#{row}" }
           renderer.clear
 
-          0.upto(screen_rows).each do |row|
+          0.upto(screen_rows - 1).each do |row|
             real_y = center_block.real_y + (row.to_i - book.half_sheet_frame.rows).to_i64
 
-            0.upto(screen_cols).each do |col|
+            0.upto(screen_cols - 1).each do |col|
               real_x = center_block.real_x + (col.to_i - book.half_sheet_frame.cols).to_i64
               block = Map::Block.from_real(real_x, real_y)
 
@@ -167,6 +167,8 @@ module Cryngine
         else
           sheet = book.sheet(1, 1)
           result_tool.load_image(sheet.sheet)
+          # result_tool.save("non-dithered-draft.bmp")
+          LibMagick.magickCropImage(result_tool.wand, book.sheet_frame.pixels_width, book.sheet_frame.pixels_height, 0, 0)
           Fiber.yield
           result_tool.scale(Map.scale, book.sheet_frame.pixels_width.to_i, book.sheet_frame.pixels_height.to_i)
         end
@@ -179,6 +181,7 @@ module Cryngine
         unless full
           width = book.sheet_frame.pixels_width.to_i * Map.scale
           height = book.sheet_frame.pixels_height.to_i * Map.scale
+          # result_tool.save("dithered-draft.bmp")
           LibMagick.magickExtentImage(result_tool.wand, width * 3, height * 3, -width, -height)
         end
         Fiber.yield

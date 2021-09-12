@@ -72,7 +72,7 @@ module Cryngine
               renderer.clear
             end
             sleep 600.milliseconds
-            Map::Player.move(1, 1)
+            # Map::Player.move(1, 1)
           end
 
           Loop.new(:render_sheet_maker, same_thread: true) do
