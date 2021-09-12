@@ -4,6 +4,7 @@ module Cryngine
   module Display
     module Renderer
       include SDL
+      alias Window = Display::Window
 
       WIDTH           = Display::Window::WIDTH
       HEIGHT          = Display::Window::HEIGHT
@@ -13,22 +14,29 @@ module Cryngine
       class_getter surface : Pointer(LibSDL::Surface)
       class_getter textures = {} of String => Texture
       class_getter render_channel = Channel(Tuple(Rect, SDL::Texture, Rect | Nil)).new
-      class_getter present_channel = Channel(Nil).new(2)
+      class_getter present_channel = Channel(Nil).new(1)
       # Makes sheet based of where the center of the screen is (col, row)
-      class_getter sheet_maker_channel = Channel(Tuple(Int16, Int16, Block)).new(9)
+      class_getter render_sheets_channel = Channel(Tuple(Int16, Int16, Array(Tuple(String, Rect, Rect)))).new(9)
       class_getter publish_made_sheets_channel = Channel(Tuple(Int16, Int16, Pointer(LibSDL::Surface))).new(9)
       class_getter load_surface_channel = Channel(Tuple(Int16, Int16, Bytes)).new(9)
       class_property player_rect : Rect
       class_property player_texture : Texture
       class_getter mutex : Mutex
+      class_getter lock_mutex : Mutex
       class_property render_book : TextureBook
+      class_property render_lock = false
+      class_getter update_channel = Channel(Nil).new(1)
+      class_getter next_render_channel = Channel(Nil).new(1)
 
+      @@lock_mutex = Mutex.new
       @@mutex = Mutex.new
       @@render_book = uninitialized TextureBook
       @@player_texture = uninitialized Texture
       @@player_rect = uninitialized Rect
       @@renderer = uninitialized Renderer
       @@surface = uninitialized Pointer(LibSDL::Surface)
+      @@start_time : Float64 = Time.monotonic.total_seconds
+      @@printed_frame = false
 
       def self.window
         Display::Window.window
@@ -36,7 +44,7 @@ module Cryngine
 
       def self.initialize(game_title, width, height)
         spawn do
-          Display::Window.window = SDL::Window.new(game_title, width, height, flags: LibSDL::WindowFlags::FULLSCREEN_DESKTOP)
+          Display::Window.window = SDL::Window.new(game_title, width, height) # , flags: LibSDL::WindowFlags::FULLSCREEN_DESKTOP)
           @@renderer = Renderer.new(window)
           @@surface = new_surface(renderer)
           @@player_rect = Rect.new(((window.width / 2) - 60).to_i, ((window.height / 2) - 71).to_i, 120, 142)
@@ -44,7 +52,7 @@ module Cryngine
           Player.initialize(window, 7, -17)
           Sheet.initialize(window, Player.block)
 
-          Log.debug { "Player: #{Player.col}, #{Player.row}: #{Player.block.real_x}, #{Player.block.real_y}" }
+          # Log.debug { "Player: #{Player.col}, #{Player.row}: #{Player.block.real_x}, #{Player.block.real_y}" }
 
           Map.tilesets.each do |name, tileset|
             textures[name] = load_img_texture tileset.image
@@ -69,38 +77,67 @@ module Cryngine
 
             mutex.synchronize do
               renderer.present
+              unless @@printed_frame
+                @@printed_frame = true
+                Log.debug { " - - Frame time: #{Time.monotonic.total_seconds - @@start_time}" }
+              end
+
               renderer.clear
             end
-            sleep 600.milliseconds
-            # Map::Player.move(1, 1)
+            self.render_lock = false
+            Window.update_channel.send(nil)
           end
 
           Loop.new(:render_sheet_maker, same_thread: true) do
-            col, row, block = sheet_maker_channel.receive
+            col, row, printables = render_sheets_channel.receive
 
-            # Prevent duplicates
+            lock_mutex.synchronize do
+              while render_lock
+                Fiber.yield
+              end
 
-            next if SheetMaker.pixel_book.sheet_exists?(col + 1, row + 1)
-            next if render_book.sheet_exists?(col + 1, row + 1)
+              self.render_lock = true
+              mutex.synchronize do
+                Log.debug { "DO   - RENDERING #{col},#{row}" }
+                renderer.clear
+                printables.each do |texture_name, view_rect, clip|
+                  renderer.viewport = view_rect
+                  renderer.copy textures[texture_name], clip
+                end
+                copy_renderer_to_surface(renderer, surface)
+              end
+              # LibIMG.save_png surface, "rendered#{col},#{row}.png"
+              renderer.clear
+              Log.debug { "DONE - RENDERING #{row}, #{col}" }
+              self.render_lock = false
+            end
 
-            sheet = SheetMaker.make_sheet col, row, block
-            # # puts "Got bytes #{bytes.size}"
-            if sheet.is_a?(SDL::Texture)
-              render_book.create_sheet(col + 1, row + 1, sheet)
-            else
+            Fiber.yield
+
+            if SheetMaker.dither
+              sheet = surface_as_bytes(surface)
+              Fiber.yield
+              SheetMaker.pixel_book.create_sheet(col, row, sheet)
               SheetMaker.made_sheets_channel.send({col, row, sheet})
+            else
+              sheet = SDL::Texture.new(LibSDL.create_texture_from_surface(renderer, surface))
+              render_book.create_sheet(col, row, sheet)
+              Log.debug { "Finished sheet #{col}, #{row}" }
             end
           end
 
-          4.times do
-            Loop.new(:load_surface) do
+          8.times do |i|
+            Loop.new("load_surface_#{i}") do
               col, row, bmp_bytes = load_surface_channel.receive
 
               # mutex.synchronize do
               rw = LibSDL.rw_from_mem(bmp_bytes, bmp_bytes.size)
+              Fiber.yield
               surface = LibSDL.load_bmp_rw(rw, 1)
-              puts "Loaded surface"
+              # puts "Loaded surface #{col}, #{row}"
+              Fiber.yield
               LibMagick.magickRelinquishMemory bmp_bytes
+              Fiber.yield
 
               publish_made_sheets_channel.send({col, row, surface})
             end
@@ -109,18 +146,16 @@ module Cryngine
           Loop.new(:publish_made_sheets, same_thread: true) do
             col, row, surface = publish_made_sheets_channel.receive
             # puts "Publishing #{col}, #{row}"
-            # puts "Loaded surface"
-            # sleep 400.milliseconds
             # LibIMG.save_png surface, "dithered#{col},#{row}.png"
             texture = LibSDL.create_texture_from_surface(renderer, surface)
-            puts "created texture"
+            # puts "created texture #{col}, #{row}"
             # sheet = Sheet.new(col, row, texture)
-            if render_book.sheet_exists?(col, row)
-              sheet = render_book.sheet(col, row)
-              sheet.clear
-            end
+            # if render_book.sheet_exists?(col, row)
+            #   sheet = render_book.sheet(col, row)
+            #   sheet.clear
+            # end
             render_book.create_sheet(col, row, SDL::Texture.new(texture))
-            puts "created sheet"
+            Log.debug { "Finished sheet #{col}, #{row}" }
             LibSDL.free_surface surface
             GC.collect
           end
@@ -137,7 +172,8 @@ module Cryngine
       end
 
       def self.copy_renderer_to_surface(renderer, surface)
-        rect = Rect.new(0, 0, window.width, window.height)
+        frame = SheetMaker.pixel_book.sheet_frame
+        rect = Rect.new(0, 0, frame.pixels_width.to_i, frame.pixels_height.to_i)
         renderer.viewport = rect
         renderer.read_pixels(rect, surface)
       end

@@ -19,6 +19,7 @@ module Cryngine
 
       class_getter dither = false
       class_getter made_sheets_channel = Channel(Tuple(Int16, Int16, Bytes)).new(9)
+      class_getter sheet_maker_channel = Channel(Tuple(Int16, Int16, Block)).new(9)
       class_getter update_center_channel = Channel(Block).new(1)
 
       @@sheets = {} of Int16 => Array(Int16)
@@ -33,12 +34,14 @@ module Cryngine
         nil
       end
 
+      @@make_sheet_mutexes : Array(Mutex) = [Mutex.new, Mutex.new, Mutex.new, Mutex.new]
+
       def self.initialize
         spawn do
           # There should never be more than 5 new sheets to make in one frame after the first
           @@pixel_book = PixelBook.new(rows: 3.to_i16)
           if @@dither
-            Renderer.render_book = TextureBook.new(1.to_i16, 1.to_i16, width: (pixel_book.book_frame.pixels_width * Map.scale).to_i, height: (pixel_book.book_frame.pixels_height * Map.scale).to_i, tile_width: (Map.tile_width * Map.scale).to_i, tile_height: (Map.tile_height * Map.scale).to_i)
+            Renderer.render_book = TextureBook.new(3.to_i16, 3.to_i16, width: (pixel_book.sheet_frame.pixels_width * Map.scale).to_i, height: (pixel_book.sheet_frame.pixels_height * Map.scale).to_i, tile_width: (Map.tile_width * Map.scale).to_i, tile_height: (Map.tile_height * Map.scale).to_i)
           end
 
           Loop.new(:update_center) do
@@ -49,33 +52,55 @@ module Cryngine
             end
           end
 
-          5.times do |i|
-            Loop.new("sheet_maker_receiver_#{i}") do
+          sheet_maker_mutex = Mutex.new
+
+          Loop.new(:sheet_maker_receiver) do
+            col, row, block = sheet_maker_channel.receive
+
+            mutex.synchronize do
+              next if pixel_book.sheet_exists?(col, row)
+              next if Renderer.render_book.sheet_exists?(col, row)
+            end
+
+            mutex.synchronize do
+              book = if @@dither
+                       pixel_book
+                     else
+                       Renderer.render_book
+                     end
+
+              book.start_sheet(col, row)
+            end
+            Log.debug { "Making sheet #{col}, #{row}" }
+            printables = make_sheet col, row, block
+
+            sheet_maker_mutex.synchronize do
+              Renderer.render_sheets_channel.send({col, row, printables})
+            end
+          end
+
+          8.times do |i|
+            Loop.new("made_sheets_receiver_#{i}") do
               col, row, unformatted_sheet = made_sheets_channel.receive
               # puts "To make sheet #{col}, #{row}"
-              pixel_book.create_sheet(col + 1, row + 1, unformatted_sheet)
 
-              bmp_bytes = if pixel_book.finished?
-                            format_bmp_from_book(pixel_book, full: true)
-                          else
-                            mutex2.synchronize do
-                              if !Renderer.render_book.sheet_started?(0, 0)
-                                Renderer.render_book.start_sheet(0, 0)
-                                format_bmp_from_book(pixel_book)
-                              end
-                            end
-                          end
+              frame = mutex.synchronize do
+                pixel_book.sheet_frame.dup
+              end
+
+              bmp_bytes = dither_sheet(frame, unformatted_sheet)
+
               Fiber.yield
               if bmp_bytes
                 # puts "Got BMP #{bmp_bytes.size}"
-                Renderer.load_surface_channel.send({0.to_i16, 0.to_i16, bmp_bytes})
+                Renderer.load_surface_channel.send({col, row, bmp_bytes})
               end
             end
           end
         end
       end
 
-      def self.make_sheet(col : Int16, row : Int16, center_block : Block) : Bytes | SDL::Texture
+      def self.make_sheet(col : Int16, row : Int16, center_block : Block) : Array(Tuple(String, Rect, Rect))
         # surface = LibSDL.create_rgb_surface(0, Window::WIDTH, Window::HEIGHT, Window::BIT_DEPTH, 0xff000000, 0x00ff0000, 0x0000ff00, 0)
         # window = SDL::Window.new("Sheet Maker", Window::WIDTH, Window::HEIGHT)
         # surface = Window.new_surface_as_render(renderer)
@@ -86,61 +111,74 @@ module Cryngine
                else
                  Renderer.render_book
                end
-        book.start_sheet(col + 1, row + 1)
+        frame = mutex.synchronize do
+          book.sheet_frame.dup
+        end
+        half_frame = mutex.synchronize do
+          book.half_sheet_frame.dup
+        end
 
-        window = Window.window
-        renderer = Renderer.renderer
-        surface = Renderer.surface
+        layer_keys = @@make_sheet_mutexes[0].synchronize do
+          Map.layers.keys
+        end.sort
 
-        screen_cols = book.sheet_frame.cols
-        screen_rows = book.sheet_frame.rows
+        screen_cols = frame.cols - 1
+        screen_rows = frame.rows - 1
 
-        Renderer.mutex.synchronize do
-          Log.debug { "Screen: #{col},#{row} #{screen_cols}, #{screen_rows}" }
-          Log.debug { "DO - RENDERING #{col},#{row}" }
-          renderer.clear
+        printables = [] of Tuple(String, Rect, Rect)
 
-          0.upto(screen_rows - 1).each do |row|
-            real_y = center_block.real_y + (row.to_i - book.half_sheet_frame.rows).to_i64
+        Log.debug { "Screen: #{col},#{row} #{screen_cols}, #{screen_rows}" }
 
-            0.upto(screen_cols - 1).each do |col|
-              real_x = center_block.real_x + (col.to_i - book.half_sheet_frame.cols).to_i64
-              block = Map::Block.from_real(real_x, real_y)
+        0.upto(screen_rows).each do |row|
+          real_y = center_block.real_y + (row - half_frame.rows)
 
-              Map.layers.keys.sort.each do |id|
-                layer = Map.layers[id]
-                layer.chunks.each do |chunk|
-                  next unless chunk.x == block.x && chunk.y == block.y && chunk.data[block.col]?
+          0.upto(screen_cols).each do |col|
+            real_x = center_block.real_x + (col - half_frame.cols)
+            block = Map::Block.from_real(real_x, real_y)
 
-                  rows = chunk.data[block.col]
-                  next unless rows[block.row]?
-                  sprite = rows[block.row]
-                  tile = Map::Tile.new(block.col, block.row, sprite, chunk)
-                  rect = SDL::Rect.new((col * Map.tile_width).to_i, (row * Map.tile_height).to_i, Map.tile_width, Map.tile_height)
+            layer_keys.each do |id|
+              layer = Map.layers[id]
+              layer.chunks.each do |chunk|
+                next unless chunk.x == block.x && chunk.y == block.y && chunk.data[block.col]?
 
-                  renderer.viewport = rect
-                  renderer.copy Renderer.textures[tile.tileset.name], tile.clip
-                end
+                rows = chunk.data[block.col]
+                next unless rows[block.row]?
+                sprite = rows[block.row]
+                tile = Map::Tile.new(block.col, block.row, sprite, chunk)
+                rect = SDL::Rect.new((col * Map.tile_width).to_i, (row * Map.tile_height).to_i, Map.tile_width, Map.tile_height)
+
+                printables.push({tile.tileset.name, rect, tile.clip})
               end
             end
           end
-
-          Renderer.copy_renderer_to_surface(renderer, surface)
-
-          # LibIMG.save_png surface, "rendered#{col},#{row}.png"
-          renderer.clear
-
-          Log.debug { "Done Rendering - #{row}, #{col}" }
-
-          if @@dither
-            Renderer.surface_as_bytes(surface)
-          else
-            SDL::Texture.new(LibSDL.create_texture_from_surface(renderer, surface))
-          end
         end
+        Log.debug { "Generated Sheet #{col}, #{row}" }
+
+        printables
       end
 
-      def self.format_bmp_from_book(book : PixelBook, full = false) : Bytes?
+      def self.dither_sheet(frame, bytes : Bytes) : Bytes?
+        result_tool = DitherTool.new
+        Log.debug { "Loading Sheet to Dither" }
+        result_tool.load_image(bytes)
+        # result_tool.save("non-dithered-draft.bmp")
+        # Fiber.yield
+        # # Log.debug { "Cropping Sheet" }
+        # LibMagick.magickCropImage(result_tool.wand, frame.pixels_width, frame.pixels_height, 0, 0)
+        Fiber.yield
+        result_tool.scale(Map.scale, frame.pixels_width.to_i, frame.pixels_height.to_i)
+        Log.debug { "Scaled Sheet" }
+        Fiber.yield
+        result_tool.floyd_steinberg
+        Log.debug { "Dithered Sheet" }
+        bytes = result_tool.as_bytes
+        # IMPORTANT! Clears GBs of memory
+        result_tool.cleanup
+
+        bytes
+      end
+
+      def self.montage_book(book : PixelBook, full = false) : Bytes?
         result_tool = DitherTool.new
 
         if full
@@ -151,7 +189,6 @@ module Cryngine
               # wand, width, height, x, y
               LibMagick.magickCropImage(result_tool.wand, book.sheet_frame.pixels_width, book.sheet_frame.pixels_height, 0, 0)
               # result_tool.save("non-dithered-#{col}.#{row}.bmp")
-              # LibMagick.magickCompositeImage sheet_tool.wand, result_tool.wand, LibMagick::CompositeOperator::OverCompositeOp, false, width, height
             end
           end
           book.clear

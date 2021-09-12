@@ -5,7 +5,7 @@ module Cryngine
     abstract class Book
       include Exceptions
 
-      abstract class Sheet
+      abstract struct Sheet
         getter book
 
         def self.coord_from_offset(real_xy, center_block_coord, tile_wh)
@@ -165,10 +165,16 @@ module Cryngine
         x_diff = offset_x - block.real_x
         y_diff = offset_y - block.real_y
         if @cols == 1 && @rows == 1
-          x_diff.abs > (half_sheet_frame.cols / view_scale) && y_diff.abs > (half_sheet_frame.cols / view_scale)
+          x_diff.abs > (half_sheet_frame.cols / view_scale) || y_diff.abs > (half_sheet_frame.cols / view_scale)
         else
-          x_diff.abs > half_sheet_frame.cols && y_diff.abs > half_sheet_frame.cols
+          x_diff.abs > half_sheet_frame.cols || y_diff.abs > half_sheet_frame.cols
         end
+
+        frame = half_sheet_frame
+        x_amount = (frame.cols - (Window.window.width / frame.tile_width / 2.0)).floor
+        y_amount = (frame.rows - (Window.window.height / frame.tile_height / 2.0)).floor
+        real_x = offset_x + x_amount
+        real_y = offset_y + y_amount
       end
 
       def center_block=(block : Block)
@@ -199,16 +205,20 @@ module Cryngine
         @cols * @rows
       end
 
+      def started
+        @started_sheets.sum { |_, array| array.size }
+      end
+
       def started?
-        started_sheets.sum { |_, array| array.size }.size > 0
+        @started_sheets.sum { |_, array| array.size } > 0
       end
 
       def full?
-        started_sheets.sum { |_, array| array.size } == size
+        @started_sheets.sum { |_, array| array.size } == size
       end
 
       def empty?
-        started_sheets.sum { |_, array| array.size }.size == 0
+        @started_sheets.sum { |_, array| array.size } == 0
       end
 
       def sheet_started?(col : Int16, row : Int16)
@@ -223,7 +233,7 @@ module Cryngine
     class PixelBook < Book
       @sheets : Hash(Int16, Hash(Int16, PixelSheet)) = {} of Int16 => Hash(Int16, PixelSheet)
 
-      class PixelSheet < Book::Sheet
+      struct PixelSheet < Book::Sheet
         getter sheet : Bytes
 
         def initialize(@col : Int16, @row : Int16, @book : PixelBook, @sheet : Bytes)
@@ -256,6 +266,10 @@ module Cryngine
         @sheets.sum { |_, hash| hash.size }
       end
 
+      def pending?
+        started > size
+      end
+
       def create_sheet(col : Int16, row : Int16, pixels : Bytes)
         raise SheetExistsError.new("#{col}, #{row}") if sheet_exists?(col, row)
         @sheets[col] ||= {} of Int16 => PixelSheet
@@ -280,7 +294,7 @@ module Cryngine
     class TextureBook < Book
       @sheets : Hash(Int16, Hash(Int16, TextureSheet)) = {} of Int16 => Hash(Int16, TextureSheet)
 
-      class TextureSheet < Book::Sheet
+      struct TextureSheet < Book::Sheet
         getter sheet : SDL::Texture
 
         def initialize(@col : Int16, @row : Int16, @book : TextureBook, @sheet : SDL::Texture)
@@ -311,6 +325,10 @@ module Cryngine
 
       def size
         @sheets.sum { |_, hash| hash.size }
+      end
+
+      def pending?
+        started > size
       end
 
       def create_sheet(col : Int16, row : Int16, texture : SDL::Texture)
