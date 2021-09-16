@@ -1,4 +1,7 @@
 require "../map/book"
+require "../map/book/sheet"
+require "../map/texture_book"
+require "../map/pixel_book"
 
 module Cryngine
   module Display
@@ -14,13 +17,9 @@ module Cryngine
       @@mutex = Mutex.new
       class_getter mutex : Mutex
 
-      @@mutex2 = Mutex.new
-      class_getter mutex2 : Mutex
-
       class_getter dither = false
       class_getter made_sheets_channel = Channel(Tuple(Int16, Int16, Bytes)).new(9)
       class_getter sheet_maker_channel = Channel(Tuple(Int16, Int16, Block)).new(9)
-      class_getter update_center_channel = Channel(Block).new(1)
 
       @@sheets = {} of Int16 => Array(Int16)
 
@@ -34,52 +33,33 @@ module Cryngine
         nil
       end
 
-      @@make_sheet_mutexes : Array(Mutex) = [Mutex.new, Mutex.new, Mutex.new, Mutex.new]
-
       def self.initialize
         spawn do
           # There should never be more than 5 new sheets to make in one frame after the first
-          @@pixel_book = PixelBook.new(rows: 3.to_i16)
+          @@pixel_book = PixelBook.new
           if @@dither
-            Renderer.render_book = TextureBook.new(3.to_i16, 3.to_i16, width: (pixel_book.sheet_frame.pixels_width * Map.scale).to_i, height: (pixel_book.sheet_frame.pixels_height * Map.scale).to_i, tile_width: (Map.tile_width * Map.scale).to_i, tile_height: (Map.tile_height * Map.scale).to_i)
+            puts "hi"
+            Renderer.render_book = TextureBook.new(width: (pixel_book.sheet_frame.pixels_width * Map.scale).to_i, height: (pixel_book.sheet_frame.pixels_height * Map.scale).to_i, tile_width: (Map.tile_width * Map.scale).to_i, tile_height: (Map.tile_height * Map.scale).to_i)
           end
 
-          Loop.new(:update_center) do
-            block = update_center_channel.receive
-            if Renderer.render_book.outside_center?(block)
-              # render_book.center_block = block
-              # map_checker_channel.send(nil)
-            end
-          end
+          9.times do
+            Loop.new(:sheet_maker_receiver) do
+              col, row, block = sheet_maker_channel.receive
 
-          sheet_maker_mutex = Mutex.new
+              mutex.synchronize do
+                next if pixel_book.sheet_exists?(col, row)
+                next if Renderer.render_book.sheet_exists?(col, row)
+              end
 
-          Loop.new(:sheet_maker_receiver) do
-            col, row, block = sheet_maker_channel.receive
+              Log.debug { "Making sheet #{col}, #{row}" }
+              Renderer.render_sheets_channel_wait.receive
+              printables = make_sheet col, row, block
 
-            mutex.synchronize do
-              next if pixel_book.sheet_exists?(col, row)
-              next if Renderer.render_book.sheet_exists?(col, row)
-            end
-
-            mutex.synchronize do
-              book = if @@dither
-                       pixel_book
-                     else
-                       Renderer.render_book
-                     end
-
-              book.start_sheet(col, row)
-            end
-            Log.debug { "Making sheet #{col}, #{row}" }
-            printables = make_sheet col, row, block
-
-            sheet_maker_mutex.synchronize do
               Renderer.render_sheets_channel.send({col, row, printables})
             end
           end
 
-          8.times do |i|
+          9.times do |i|
             Loop.new("made_sheets_receiver_#{i}") do
               col, row, unformatted_sheet = made_sheets_channel.receive
               # puts "To make sheet #{col}, #{row}"
@@ -88,6 +68,7 @@ module Cryngine
                 pixel_book.sheet_frame.dup
               end
 
+              Renderer.render_sheets_channel_wait.receive
               bmp_bytes = dither_sheet(frame, unformatted_sheet)
 
               Fiber.yield
@@ -97,6 +78,7 @@ module Cryngine
               end
             end
           end
+          Renderer.render_sheets_channel_wait.send(nil)
         end
       end
 
@@ -118,7 +100,7 @@ module Cryngine
           book.half_sheet_frame.dup
         end
 
-        layer_keys = @@make_sheet_mutexes[0].synchronize do
+        layer_keys = mutex.synchronize do
           Map.layers.keys
         end.sort
 
@@ -127,7 +109,7 @@ module Cryngine
 
         printables = [] of Tuple(String, Rect, Rect)
 
-        Log.debug { "Screen: #{col},#{row} #{screen_cols}, #{screen_rows}" }
+        # Log.debug { "Screen: #{col},#{row} #{screen_cols}, #{screen_rows}" }
 
         0.upto(screen_rows).each do |row|
           real_y = center_block.real_y + (row - half_frame.rows)
@@ -159,12 +141,12 @@ module Cryngine
 
       def self.dither_sheet(frame, bytes : Bytes) : Bytes?
         result_tool = DitherTool.new
-        Log.debug { "Loading Sheet to Dither" }
+        # Log.debug { "Loading Sheet to Dither" }
         result_tool.load_image(bytes)
         # result_tool.save("non-dithered-draft.bmp")
         # Fiber.yield
-        # # Log.debug { "Cropping Sheet" }
-        # LibMagick.magickCropImage(result_tool.wand, frame.pixels_width, frame.pixels_height, 0, 0)
+        Log.debug { "Cropping Sheet" }
+        LibMagick.magickCropImage(result_tool.wand, frame.pixels_width, frame.pixels_height, 0, 0)
         Fiber.yield
         result_tool.scale(Map.scale, frame.pixels_width.to_i, frame.pixels_height.to_i)
         Log.debug { "Scaled Sheet" }

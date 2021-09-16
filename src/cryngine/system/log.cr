@@ -6,7 +6,8 @@ module Cryngine
 
     formatter = ::Log::Formatter.new do |entry, io|
       label = entry.severity.to_s
-      io << label[0] << " - " << entry.timestamp << " -- " << entry.message
+      # io << label[0] << " - " << entry.timestamp << " -- "
+      io << entry.message
       unless entry.data.empty?
         io << " -- " << entry.data
       end

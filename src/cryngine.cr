@@ -1,5 +1,18 @@
 require "cryngine/exceptions"
 
+ENV["EVENT_PRECISE_TIMER"] = "1"
+ENV["CRYSTAL_WORKERS"] = "16"
+
+lib C
+  fun usleep(useconds_t : Int32) : Int32
+end
+
+USLEEP = 1_000_000
+
+def usleep(time)
+  C.usleep (time * USLEEP).to_i
+end
+
 module Cryngine
   VERSION = "0.1.0"
 
@@ -10,12 +23,14 @@ module Cryngine
     alias PixelBook = Map::PixelBook
     alias TextureBook = Map::TextureBook
     alias Rect = SDL::Rect
+    alias Keyboard = Devices::Keyboard
   end
 
   module Map
     alias SheetMaker = Display::SheetMaker
     alias Window = Display::Window
     alias Rect = SDL::Rect
+    alias Renderer = Display::Renderer
   end
 
   module Devices

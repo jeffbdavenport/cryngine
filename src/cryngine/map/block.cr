@@ -28,11 +28,19 @@ module Cryngine
         new(x(x), y(y), col(x), row(y))
       end
 
+      def move(x : Int16, y : Int16)
+        self.class.from_real(real_x + x, real_y + y)
+      end
+
       def initialize(@x, @y, @col, @row)
       end
 
       def ==(other)
         x == other.x && y == other.y && col == other.col && row == other.row
+      end
+
+      def real
+        {real_x, real_y}
       end
 
       def real_x

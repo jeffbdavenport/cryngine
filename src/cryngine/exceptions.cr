@@ -23,5 +23,11 @@ module Cryngine
     class SheetMissingError < Exception; end
 
     class SheetAlreadyStartedError < Exception; end
+
+    class SheetNotStarted < Exception; end
+
+    class CenterMismatch < Exception; end
+
+    class SheetWidthZero < Exception; end
   end
 end
