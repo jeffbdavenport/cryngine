@@ -13,7 +13,7 @@ module Cryngine
 
       def initialize(@name, @visible, @startx, @starty, @x, @y, chunks)
         chunks.as_a.each do |chunk|
-          data = chunk["data"].as_a.map(&.as_i.to_i)
+          data = chunk["data"].as_a.map(&.as_i64.to_i64)
           # data = StaticArray(UInt8, 256).new(0)
           # array.each_with_index do |e, i|
           #   data[i] = e

@@ -13,20 +13,23 @@ module Cryngine
       class_getter renderer : SDL::Renderer
       class_getter surface : Pointer(LibSDL::Surface)
       class_getter textures = {} of String => Texture
-      class_getter render_channel = Channel(Array(Tuple(Rect, SDL::Texture, Rect | Nil))).new(1)
+      class_getter render_channel = Channel(Array(Tuple(Rect, SDL::Texture, Rect?))).new(1)
       # class_getter present_channel = Channel(Nil).new(10000)
       # Makes sheet based of where the center of the screen is (col, row)
-      class_getter render_sheets_channel = Channel(Tuple(Int16, Int16, Array(Tuple(String, Rect, Rect)))).new(9)
+      class_getter render_sheets_channel = Channel(Tuple(Int16, Int16, Array(Tuple(String, Rect, Rect)), Bool)).new(9)
       class_getter render_sheets_channel_wait = Channel(Nil).new(1)
-      class_getter publish_made_sheets_channel = Channel(Tuple(Int16, Int16, Pointer(LibSDL::Surface))).new(9)
-      class_getter cleanup_channel = Channel(Tuple(Int16, Int16, Pointer(LibSDL::Texture), Pointer(LibSDL::Surface))).new(1)
-      class_getter load_surface_channel = Channel(Tuple(Int16, Int16, Bytes)).new(9)
+      class_getter publish_made_sheets_channel = Channel(Tuple(Int16, Int16, Pointer(LibSDL::Surface), Bool)).new(9)
+      class_getter cleanup_channel = Channel(Tuple(Int16, Int16, Pointer(LibSDL::Texture), Pointer(LibSDL::Surface), Bool)).new(1)
+      class_getter load_surface_channel = Channel(Tuple(Int16, Int16, Bytes, Bool)).new(9)
       class_getter load_surface_wait_channel = Channel(Nil).new(1)
       class_property player_rect : Rect
-      class_property player_texture : Texture
+      class_property player_clip : Rect
+      class_property player_texture : String
+      class_property loaded_player_texture : SDL::Texture
       class_getter mutex : Mutex
       class_getter lock_mutex : Mutex
-      class_property render_book : TextureBook
+      class_property render_book_below : TextureBook
+      class_property render_book_above : TextureBook
       class_property render_lock = false
       class_getter clear_channel = Channel(Nil).new(1)
       class_getter update_channel = Channel(Nil).new(1)
@@ -34,9 +37,12 @@ module Cryngine
 
       @@lock_mutex = Mutex.new
       @@mutex = Mutex.new
-      @@render_book = uninitialized TextureBook
-      @@player_texture = uninitialized Texture
+      @@render_book_below = uninitialized TextureBook
+      @@render_book_above = uninitialized TextureBook
+      @@player_texture = uninitialized String
+      @@loaded_player_texture = uninitialized SDL::Texture
       @@player_rect = uninitialized Rect
+      @@player_clip = uninitialized Rect
       @@renderer = uninitialized Renderer
       @@surface = uninitialized Pointer(LibSDL::Surface)
       @@start_time : Float64 = Time.monotonic.total_seconds
@@ -46,6 +52,10 @@ module Cryngine
         Display::Window.window
       end
 
+      def self.render_book
+        @@render_book_below
+      end
+
       def self.initialize(game_title, width, height)
         spawn do
           Display::Window.window = SDL::Window.new(game_title, width, height) # , flags: LibSDL::WindowFlags::FULLSCREEN_DESKTOP)
@@ -53,17 +63,20 @@ module Cryngine
           Display::Window.window.recalc_window_size
           @@renderer = Renderer.new(window)
           @@surface = new_surface(renderer)
-          @@player_rect = Rect.new(((window.width / 2) - 60).to_i, ((window.height / 2) - 71).to_i, 120, 142)
-          @@player_texture = load_img_texture "assets/sprites/full/models/male_redone_OC.png"
-          Player.initialize(window, 7, -17)
+          # @@player_rect = Rect.new(((window.width / 2) - 60).to_i, ((window.height / 2) - 71).to_i, 120, 142)
+          # @@player_texture = load_img_texture "assets/AllModels.png"
+          # Player.initialize(window, 7, -17)
+          # Player.initialize_wait.receive
           Sheet.initialize(window, Player.block)
 
+          self.loaded_player_texture = load_img_texture player_texture
           # Log.debug { "Player: #{Player.col}, #{Player.row}: #{Player.block.real_x}, #{Player.block.real_y}" }
 
           Map.tilesets.each do |name, tileset|
             textures[name] = load_img_texture tileset.image
           end
-          @@render_book = TextureBook.new(view_scale: Map.scale)
+          @@render_book_below = TextureBook.new(view_scale: Map.scale, montage: SheetMaker.montage_map)
+          @@render_book_above = TextureBook.new(view_scale: Map.scale, montage: SheetMaker.montage_map)
           SheetMaker.initialize
           render_sheets_channel_wait.receive
 
@@ -79,16 +92,16 @@ module Cryngine
                 renderer.copy(texture.to_unsafe)
               end
             end
-            # Window.update_channel.send(nil)
-            # end
 
             # Loop.new(:present, same_thread: true) do
             # present_channel.receive
 
             mutex.synchronize do
               # time = Time.measure {
-              renderer.present
-              renderer.clear
+              if textures.any?
+                renderer.present
+                renderer.clear
+              end
               # }
               if render_sheets_channel_wait.waiting?
                 render_sheets_channel_wait.send(nil)
@@ -116,86 +129,107 @@ module Cryngine
           end
 
           Loop.new(:render_sheet_maker, same_thread: true) do
-            col, row, printables = render_sheets_channel.receive
+            col, row, printables, above = render_sheets_channel.receive
 
             render_sheets_channel_wait.receive
 
             mutex.synchronize do
-              Log.debug { "DO   - RENDERING #{col},#{row}" }
-              # renderer.clear
+              Log.debug { "DO   - RENDERING Above: #{above} #{col},#{row}" }
+
+              LibSDL.set_render_draw_color(renderer, 255, 255, 255, 0)
+              renderer.clear
+
               printables.each do |texture_name, view_rect, clip|
                 renderer.viewport = view_rect
                 renderer.copy textures[texture_name], clip
               end
               copy_renderer_to_surface(renderer, surface)
-              # renderer.clear
+              renderer.clear
             end
             # LibIMG.save_png surface, "rendered#{col},#{row}.png"
-            Log.debug { "DONE - RENDERING #{row}, #{col}" }
+            Log.debug { "DONE - RENDERING Above: #{above} #{row}, #{col}" }
 
             render_sheets_channel_wait.receive
 
             if SheetMaker.dither
               sheet = surface_as_bytes(surface)
               Fiber.yield
-              SheetMaker.pixel_book.create_sheet(col, row, sheet)
-              Log.debug { "Started sheet in Renderer  #{col}, #{row}" }
-              render_book.start_sheet(col, row)
-              SheetMaker.made_sheets_channel.send({col, row, sheet})
+              book = if above
+                       SheetMaker.pixel_book_above
+                     else
+                       SheetMaker.pixel_book_below
+                     end
+              book.create_sheet(col, row, sheet)
+              Log.debug { "Started sheet in Renderer Above: #{above} #{col}, #{row}" }
+              SheetMaker.made_sheets_channel.send({col, row, sheet, above})
             else
+              book = if above
+                       render_book_above
+                     else
+                       render_book_below
+                     end
               sheet = SDL::Texture.new(LibSDL.create_texture_from_surface(renderer, surface))
-              render_book.create_sheet(col, row, sheet)
+              book.create_sheet(col, row, sheet)
               # Log.debug { "Finished sheet #{col}, #{row}" }
             end
           end
 
-          1.times do
-            Loop.new(:load_surface) do
-              col, row, bmp_bytes = load_surface_channel.receive
-              # unless col == 0 && row == 0
-              #   load_surface_wait_channel.receive
-              # end
-              # mutex.synchronize do
-              render_sheets_channel_wait.receive
-              rw = LibSDL.rw_from_mem(bmp_bytes, bmp_bytes.size)
-              surface = LibSDL.load_bmp_rw(rw, 1)
-              Log.debug { "Loaded surface #{col}, #{row}" }
-              # LibIMG.save_png surface, "finished#{col},#{row}.png"
-              LibMagick.magickRelinquishMemory bmp_bytes
+          spawn do
+            2.times do
+              Loop.new(:load_surface) do
+                col, row, bmp_bytes, above = load_surface_channel.receive
+                # unless col == 0 && row == 0
+                #   load_surface_wait_channel.receive
+                # end
+                # mutex.synchronize do
+                render_sheets_channel_wait.receive
+                rw = LibSDL.rw_from_mem(bmp_bytes, bmp_bytes.size)
+                surface = LibSDL.load_bmp_rw(rw, 1)
+                Log.debug { "Loaded surface Layer: #{above} #{col}, #{row}" }
+                # LibIMG.save_png surface, "finished#{col},#{row}.png"
+                LibMagick.magickRelinquishMemory bmp_bytes
 
-              publish_made_sheets_channel.send({col, row, surface})
+                publish_made_sheets_channel.send({col, row, surface, above})
+              end
             end
-          end
 
-          8.times do
-            Loop.new(:cleanup) do
-              col, row, texture, surface = cleanup_channel.receive
-              Log.debug { "created texture #{col}, #{row}" }
-              render_sheets_channel_wait.receive
-              render_book.create_sheet(col, row, SDL::Texture.new(texture))
-              Log.debug { "-- Finished sheet #{col}, #{row}" }
+            1.times do
+              Loop.new(:cleanup) do
+                col, row, texture, surface, above = cleanup_channel.receive
+                Log.debug { "created texture Layer: #{above} #{col}, #{row}" }
+                render_sheets_channel_wait.receive
+                book = if above
+                         render_book_above
+                       else
+                         render_book_below
+                       end
+                book.create_sheet(col, row, SDL::Texture.new(texture))
+                Log.debug { "-- Finished sheet Layer: #{above} #{col}, #{row}" }
 
-              # # TODO : DELETE
-              # LibIMG.save_png surface, "dithered#{col},#{row}.png"
+                # # TODO : DELETE
+                # LibIMG.save_png surface, "dithered#{col},#{row}.png"
 
-              render_sheets_channel_wait.receive
-              LibSDL.free_surface surface
-              # GC.collect
-              Log.debug { "-- Finished cleanup" }
+                render_sheets_channel_wait.receive
+                LibSDL.free_surface surface
+                # GC.collect
+                Log.debug { "-- Finished cleanup" }
+              end
             end
           end
 
           Loop.new(:publish_made_sheets, same_thread: true) do
-            col, row, surface = publish_made_sheets_channel.receive
-            # puts "Publishing #{col}, #{row}"
+            col, row, surface, above = publish_made_sheets_channel.receive
+            Log.debug { "Publishing #{col}, #{row}" }
             render_sheets_channel_wait.receive
+
+            LibSDL.set_color_key(surface, 1, LibSDL.map_rgb(surface.value.format, 255, 255, 255))
             texture = LibSDL.create_texture_from_surface(renderer, surface)
             # sheet = Sheet.new(col, row, texture)
             # if render_book.sheet_exists?(col, row)
             #   sheet = render_book.sheet(col, row)
             #   sheet.clear
             # end
-            cleanup_channel.send({col, row, texture, surface})
+            cleanup_channel.send({col, row, texture, surface, above})
           end
 
           Display::Window.update_channel.send(nil)

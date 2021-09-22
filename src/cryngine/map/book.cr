@@ -21,15 +21,25 @@ module Cryngine
 
       # @sheets : Hash(Int16, Hash(Int16, Sheet)) = {} of Int16 => Hash(Int16, Sheet)
 
-      def initialize(width : Int32 = Window.window.width, height : Int32 = Window.window.height, @center_block : Block = Player.block, tile_width = Map.tile_width, tile_height = Map.tile_height, @view_scale = 1.0)
-        @sheet_frame = Frame.new(width.to_i16, height.to_i16, tile_width.to_i16, tile_height.to_i16)
+      def initialize(width : Int32 = Window.window.width, height : Int32 = Window.window.height, @center_block : Block = Player.block, tile_width = Map.tile_width, tile_height = Map.tile_height, @view_scale = 1.0, montage = false)
+        @sheet_frame = Frame.new(width, height, tile_width.to_i16, tile_height.to_i16)
         @half_sheet_frame = Frame.new((width / 2.0).to_i16, (height / 2.0).to_i16, tile_width.to_i16, tile_height.to_i16)
-        @x_between_distance = (@sheet_frame.cols - (Window.window.width / (Map.tile_width * Map.scale))).floor.to_i16 - 2
-        @y_between_distance = (@sheet_frame.rows - (Window.window.height / (Map.tile_height * Map.scale))).floor.to_i16 - 2
+        if montage
+          @x_between_distance = @sheet_frame.cols
+          @y_between_distance = @sheet_frame.rows
+          @center_block = Block.from_real(0, 0)
+        else
+          @x_between_distance = (@sheet_frame.cols - (Window.window.width / (Map.tile_width * Map.scale))).floor.to_i16 - 2
+          @y_between_distance = (@sheet_frame.rows - (Window.window.height / (Map.tile_height * Map.scale))).floor.to_i16 - 2
+        end
 
         if @x_between_distance == 0 || @y_between_distance == 0
           raise SheetWidthZero.new("Distance between sheets cannot be Zero. X: #{@x_between_distance}, Y: #{y_between_distance}")
         end
+      end
+
+      def sheet_for(block : Block) : Tuple(Int16, Int16)
+        {sheet_col(block.real_x), sheet_row(block.real_y)}
       end
 
       def start_sheet(col : Int16, row : Int16)
@@ -49,12 +59,12 @@ module Cryngine
       end
 
       def sheet_col(real_x)
-        x = real_x - (offset_x) + (x_between_distance / 2.0)
+        x = real_x - (offset_x) # + (x_between_distance / 2.0)
         (x/x_between_distance).floor.to_i16
       end
 
       def sheet_row(real_y)
-        y = real_y - (offset_y + 1) + (y_between_distance / 2.0)
+        y = real_y - (offset_y) # + 1) # + (y_between_distance / 2.0)
         (y/y_between_distance).floor.to_i16
       end
 

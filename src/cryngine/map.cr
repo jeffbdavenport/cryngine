@@ -1,6 +1,8 @@
 require "json"
 require "./map/tileset"
 require "./map/layer"
+require "./map/collision_map"
+require "./map/collider"
 
 module Cryngine
   module Map
@@ -44,7 +46,7 @@ module Cryngine
         @@tilesets[tileset.name] = tileset
       end
       json["layers"].as_a.each do |layer|
-        next unless layer["chunks"]?
+        next unless layer["chunks"]? && !layer["chunks"].as_a.empty?
         @@layers[layer["id"].as_i] = Layer.new(
           name: layer["name"].as_s,
           visible: layer["visible"].as_bool,

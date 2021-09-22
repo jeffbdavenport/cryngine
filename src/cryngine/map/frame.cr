@@ -3,10 +3,10 @@ module Cryngine
     struct Frame
       getter cols : Int16
       getter rows : Int16
-      getter width : Int16
-      getter height : Int16
-      getter pixels_width : Int16
-      getter pixels_height : Int16
+      getter width : Int16 | Int32
+      getter height : Int16 | Int32
+      getter pixels_width : Int32
+      getter pixels_height : Int32
       getter width_remainder : Int16
       getter height_remainder : Int16
       getter tile_width : Int16
@@ -15,8 +15,8 @@ module Cryngine
       def initialize(@width, @height, @tile_width : Int16, @tile_height : Int16)
         @cols = (width / tile_width).to_i16
         @rows = (height / tile_height).to_i16
-        @pixels_width = (@cols * tile_width).to_i16
-        @pixels_height = (@rows * tile_height).to_i16
+        @pixels_width = (@cols.to_i * tile_width)
+        @pixels_height = (@rows.to_i * tile_height)
         @width_remainder = (width % tile_width).to_i16
         @height_remainder = (height % tile_height).to_i16
       end

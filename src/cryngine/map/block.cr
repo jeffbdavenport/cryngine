@@ -58,6 +58,10 @@ module Cryngine
       def adjacent_from_block?(block, cols = 12, rows = 7)
         (block.real_x - real_x).abs <= cols && (block.real_y - real_y).abs <= rows
       end
+
+      def <=>(other)
+        y < other.y && x < other.x && col < other.col && row && col < other.col
+      end
     end
   end
 end
