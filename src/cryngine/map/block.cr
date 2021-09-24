@@ -1,7 +1,7 @@
 require "./chunk"
 
 module Cryngine
-  module Map
+  class Map
     struct Block
       getter x : Int16
       getter y : Int16

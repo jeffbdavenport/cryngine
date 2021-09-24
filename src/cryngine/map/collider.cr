@@ -1,5 +1,5 @@
 module Cryngine
-  module Map
+  class Map
     class Collider
     end
   end

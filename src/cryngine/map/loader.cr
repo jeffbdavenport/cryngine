@@ -1,7 +1,7 @@
 require "../map"
 
 module Cryngine
-  module Map
+  class Map
     module Loader
       def self.initialize(name)
         load_map(name)

@@ -2,9 +2,11 @@ require "./coord"
 require "json"
 
 module Cryngine
-  module Map
+  class Map
     class Tileset
       class_property path = "./tiled/tilesets/"
+
+      getter texture : SDL::Texture
 
       getter firstgid : Int32
       getter image : String
@@ -54,6 +56,8 @@ module Cryngine
         if json["tileoffset"]?
           @tile_offset = Coord.new(x: json["tileoffset"]["x"].as_i, y: json["tileoffset"]["y"].as_i)
         end
+        # May slow down due to blocking
+        @texture = Renderer.load_texture @image
       end
     end
   end

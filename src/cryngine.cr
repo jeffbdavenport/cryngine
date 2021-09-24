@@ -15,28 +15,32 @@ end
 
 module Cryngine
   VERSION = "0.1.0"
+  include Exceptions
 
   module Display
   end
+
+  alias Pixels = Bytes
 
   alias Rect = SDL::Rect
 
   alias Player = Map::Player
   alias Sheet = Map::Sheet
   alias Block = Map::Block
-  alias PixelBook = Map::PixelBook
-  alias TextureBook = Map::TextureBook
+  alias SheetGrid = Map::SheetGrid
+  alias TextureSheetGrid = Map::TextureSheetGrid
   alias Chunk = Map::Chunk
   alias CollisionMap = Map::CollisionMap
   alias Collider = Map::Collider
+  alias SheetMaker = Map::SheetMaker
 
-  alias SheetMaker = Display::SheetMaker
   alias Window = Display::Window
   alias Renderer = Display::Renderer
+  alias DitherTool = Display::DitherTool
 
   alias Keyboard = Devices::Keyboard
 
-  module Map
+  class Map
   end
 
   module Devices

@@ -1,7 +1,7 @@
 require "./chunk"
 
 module Cryngine
-  module Map
+  class Map
     struct Layer
       getter name : String
       getter visible : Bool

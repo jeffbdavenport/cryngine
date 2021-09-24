@@ -1,5 +1,5 @@
 module Cryngine
-  module Map
+  class Map
     struct Chunk
       class_getter width : UInt8 = 16.to_u8
       class_getter height : UInt8 = 16.to_u8

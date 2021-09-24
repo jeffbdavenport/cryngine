@@ -1,13 +1,13 @@
 module Cryngine
-  module Map
-    class PixelBook < Book
+  class Map
+    class SheetGrid < Grid
       @sheets : Hash(Block, PixelSheet) = {} of Block => PixelSheet
 
-      struct PixelSheet < Book::Sheet
-        getter sheet : Bytes
+      struct PixelSheet < Sheet
+        getter sheet : Pixels
         getter center_block : Block
 
-        def initialize(@col : Int16, @row : Int16, @book : PixelBook, @sheet : Bytes, @center_block)
+        def initialize(@col : Int16, @row : Int16, @grid : SheetGrid, @sheet : Pixels, @center_block)
         end
       end
 
@@ -46,29 +46,13 @@ module Cryngine
         @sheets.size == count
       end
 
-      def create_sheet(col, row, pixels : Bytes)
+      def create_sheet(col : Int16, row : Int16, pixels : Pixels)
         mutex.synchronize do
           block = block_for(col, row)
           raise SheetNotStarted.new("#{col}, #{row} Tried to create sheet that was not started, was it deleted?") unless sheet_started?(block)
           @sheets[block] = PixelSheet.new(col, row, self, pixels, block)
         end
       end
-
-      # def clear
-      #   mutex.synchronize do
-      #     @started_sheets.clear
-      #     @sheets.each do |col, rows|
-      #       rows.each do |row, value|
-      #         GC.free value.sheet.to_unsafe.as(Pointer(Void))
-      #       end
-      #     end
-      #     @sheets.clear
-      #     7.times do
-      #       GC.collect
-      #     end
-      #   end
-      #   Log.debug { "Cleared PixelBook" }
-      # end
     end
   end
 end

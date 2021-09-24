@@ -1,5 +1,5 @@
 module Cryngine
-  module Map
+  class Map
     struct Coord
       property x, y
 

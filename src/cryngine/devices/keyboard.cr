@@ -138,8 +138,8 @@ module Cryngine
 
       def self.process_event(event)
         case event.type
-        when EventType::QUIT, EventType::APP_TERMINATING
-          Window.exit_channel.send(nil)
+        when EventType::QUIT, EventType::APP_TERMINATING, Event::Quit
+          Display::Window.exit_channel.send(nil)
         when EventType::TEXT_INPUT
         else
           puts event.type

@@ -29,5 +29,18 @@ module Cryngine
     class CenterMismatch < Exception; end
 
     class SheetWidthZero < Exception; end
+
+    class SheetMadeEmpty < Exception; end
+
+    class MontageBoundsMissing < Exception; end
+
+    # Grid
+    class InvalidTextureType < Exception; end
+
+    # Renderer
+
+    class RenderInvalidType < Exception; end
+
+    # Sheets
   end
 end

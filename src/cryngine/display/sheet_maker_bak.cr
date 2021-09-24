@@ -5,9 +5,7 @@ require "../map/pixel_book"
 
 module Cryngine
   module Display
-    module SheetMaker
-      class_getter dither_channel = Channel(Nil).new(1)
-
+    class SheetMakerbak
       @@mutex = Mutex.new
       class_getter mutex : Mutex
 
@@ -18,8 +16,6 @@ module Cryngine
       class_getter sheet_maker_channel = Channel(Tuple(Int16, Int16, Block)).new(9)
 
       class_getter map_size = 0
-
-      @@sheets = {} of Int16 => Array(Int16)
 
       class_getter pixel_book_below : PixelBook
       @@pixel_book_below = uninitialized PixelBook

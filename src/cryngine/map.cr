@@ -3,35 +3,43 @@ require "./map/tileset"
 require "./map/layer"
 require "./map/collision_map"
 require "./map/collider"
+require "./display/renderer"
 
 module Cryngine
-  module Map
+  class Map
     class_property path = "tiled/maps/"
 
-    class_property tilesets : Hash(String, Tileset) = {} of String => Tileset
-    class_property layers : Hash(Int32, Layer) = {} of Int32 => Layer
-    class_property tile_height : Int32
-    class_property tile_width : Int32
+    setter path
+    @path : String?
 
-    @@tile_height = uninitialized Int32
-    @@tile_width = uninitialized Int32
-    class_getter isometric = true
-    class_property scale = 1.0
+    getter tilesets : Hash(String, Tileset) = {} of String => Tileset
+    getter layers : Hash(Int32, Layer) = {} of Int32 => Layer
+    getter tile_height : UInt8
+    getter tile_width : UInt8
 
-    def self.scaled_tile_width
+    @tile_height = uninitialized UInt8
+    @tile_width = uninitialized UInt8
+    getter isometric = false
+    getter scale = 1.0
+
+    def scaled_tile_width
       (tile_width * scale).to_i
     end
 
-    def self.scaled_tile_height
+    def scaled_tile_height
       (tile_height * scale).to_i
     end
 
-    def self.load_map(name : String)
+    def path
+      @path || self.class.path
+    end
+
+    def initialize(name : String, @scale : Float64)
       json = File.open("#{path}#{name}.json") do |file|
         JSON.parse(file)
       end
       raise "Not a map" unless json["type"] == "map"
-      @@isometric = false if json["orientation"] != "isometric"
+      @isometric = json["orientation"] == "isometric"
       json["tilesets"].as_a.each do |tileset|
         if tileset["source"]?
           source = tileset["source"].as_s
@@ -43,11 +51,11 @@ module Cryngine
           tileset_json = tileset
         end
         tileset = Tileset.new(tileset_json, tileset["firstgid"].as_i)
-        @@tilesets[tileset.name] = tileset
+        @tilesets[tileset.name] = tileset
       end
       json["layers"].as_a.each do |layer|
         next unless layer["chunks"]? && !layer["chunks"].as_a.empty?
-        @@layers[layer["id"].as_i] = Layer.new(
+        @layers[layer["id"].as_i] = Layer.new(
           name: layer["name"].as_s,
           visible: layer["visible"].as_bool,
           chunks: layer["chunks"],
@@ -57,11 +65,11 @@ module Cryngine
           y: layer["y"].as_i
         )
       end
-      @@tile_width = json["tilewidth"].as_i
-      @@tile_height = json["tileheight"].as_i
+      @tile_width = json["tilewidth"].as_i.to_u8
+      @tile_height = json["tileheight"].as_i.to_u8
     end
 
-    def self.get_tileset(id)
+    def get_tileset(id)
       tilesets.each do |name, tileset|
         if id >= tileset.firstgid && id < tileset.firstgid + (tileset.tile_count)
           return tileset

@@ -30,6 +30,10 @@ module Cryngine
         LibMagick.magickRemapImage @wand, @dither_wand, LibMagick::DitherMethod::FloydSteinbergDitherMethod
       end
 
+      def crop(width, height, x = 0, y = 0)
+        LibMagick.magickCropImage(@wand, width, height, x, y)
+      end
+
       def scale(scale : Float64, width : Int32, height : Int32)
         LibMagick.magickResizeImage @wand, (width * scale).to_i, (height * scale).to_i, LibMagick::FilterType::BoxFilter
       end

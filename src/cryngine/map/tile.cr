@@ -1,7 +1,8 @@
 require "sdl"
+require "./tileset"
 
 module Cryngine
-  module Map
+  class Map
     struct Tile
       include SDL
       getter id : Int16
@@ -9,9 +10,10 @@ module Cryngine
       getter chunk : Chunk
       getter row : UInt8
       getter col : UInt8
+      getter map : Map
 
-      def initialize(@col : UInt8, @row : UInt8, @id : Int16, @chunk : Chunk)
-        @tileset = Map.get_tileset(id)
+      def initialize(@map : Map, @col : UInt8, @row : UInt8, @id : Int16, @chunk : Chunk)
+        @tileset = @map.get_tileset(id)
       end
 
       def self.clip(id, tileset : Tileset)
