@@ -94,12 +94,7 @@ module Cryngine
 
       # UPDATE
       def self.rpg_update_loop(grid : TextureSheetGrid)
-        until grid.sheet_exists?(0, 0) && grid.sheet_exists?(0, 0)
-          if Renderer.render_print_wait.waiting?
-            Renderer.render_print_wait.send(nil)
-          end
-          sleep 100.microseconds
-        end
+        Renderer.wait_for_render(grid, 0, 0)
 
         # until grid.sheet_exists?(0, 0) && grid.sheet_exists?(0, 0)
         #   sleep 1.milliseconds
@@ -147,12 +142,12 @@ module Cryngine
           prev_x = Input.minus_x
           prev_y = Input.minus_y
 
-          printables = yield(player_block, current, Input.minus_x.round.to_i16, Input.minus_y.round.to_i16)
+          yield(printables, player_block, current, Input.minus_x.round.to_i16, Input.minus_y.round.to_i16)
 
-          if printables == false
-            exit_channel.send(nil)
-            next
-          end
+          # if printables == false
+          #   exit_channel.send(nil)
+          #   next
+          # end
 
           Renderer.render_channel.send(printables)
 

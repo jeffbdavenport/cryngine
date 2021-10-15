@@ -11,9 +11,12 @@ module Cryngine
       @render_grid = uninitialized TextureSheetGrid
 
       @map_size : UInt16 # = 0_u16
+      @bounds : Tuple(Int32, Int32, Int32, Int32, Int32, Int32)?
 
       def initialize(map : Map, @layers : Array(Int32), @grid = SheetGrid.new(map: map, montage: true, centered: false, center_block: Block.from_real(0, 0)), @dither = false)
         @map = map
+        puts "Initializing render_grid"
+        @render_grid = TextureSheetGrid.new(map, montage: true, centered: false, center_block: Block.from_real(0, 0))
         @montage_channel = Channel(Nil).new(1)
         @receive_texture_channel = Channel(SDL::Texture).new(1)
 
@@ -40,7 +43,6 @@ module Cryngine
         start_col.upto(end_col).each do |col|
           start_row.upto(end_row).each do |row|
             grid.start_sheet(col, row)
-            grid.start_sheet(col, row)
             block = grid.block_for(col, row)
             spawn do
               create_sheet(block)
@@ -52,6 +54,7 @@ module Cryngine
 
       def create_sheet(pivot_block : Block)
         super
+        puts "#{grid.size}:#{@map_size}"
         if grid.size == @map_size
           @montage_channel.send(nil)
         end
@@ -91,6 +94,7 @@ module Cryngine
             right_edge = cur_col * sheet.right
             bottom_edge = cur_row * sheet.bottom
 
+            puts "Edges: #{{top_edge, left_edge, right_edge, bottom_edge}}"
             top ||= top_edge
             top = top_edge if top_edge < top
             left ||= left_edge
@@ -115,6 +119,10 @@ module Cryngine
         width = right - left
         height = bottom - top
         {width, height, top, left, right, bottom}
+      end
+
+      def set_bounds(width, height, top, left, right, bottom)
+        @bounds = {width, height, top, left, right, bottom}
       end
 
       def montage(start_col, start_row, end_col, end_row, dither = false)
@@ -145,12 +153,18 @@ module Cryngine
         Log.debug { "Created Montage" }
         result_tool = DitherTool.new(wand)
 
-        width, height, top, left, right, bottom = get_bounds_pixels(start_col, start_row, end_col, end_row)
+        puts "GetBoundsPixels: #{{start_col, start_row, end_col, end_row}}"
+        bounds = @bounds
+        width, height, top, left, right, bottom = if bounds
+                                                    bounds
+                                                  else
+                                                    get_bounds_pixels(start_col, start_row, end_col, end_row)
+                                                  end
+        puts "#{get_bounds_pixels(start_col, start_row, end_col, end_row)}"
         LibMagick.magickCropImage(result_tool.wand, width, height, left, top)
 
         if @dither
-          puts "height #{height}"
-          @render_grid = TextureSheetGrid.new(@map, width: (width * @map.scale).to_i, height: (height * @map.scale).to_i, tile_height: (@map.tile_height * @map.scale).to_u8, tile_width: (@map.tile_width * @map.scale).to_u8, montage: true, centered: false)
+          @render_grid = TextureSheetGrid.new(@map, width: (width * @map.scale).to_i, height: (height * @map.scale).to_i, tile_height: (@map.tile_height * @map.scale).to_u8, tile_width: (@map.tile_width * @map.scale).to_u8, montage: true, centered: false, center_block: Block.from_real(0, 0))
           result_tool.scale(@map.scale, width, height)
 
           Log.debug { "Scaled Montage" }
@@ -159,7 +173,7 @@ module Cryngine
           Log.debug { "Dithered Montage" }
           # result_tool.save("dithered-draft-#{above}.bmp")
         else
-          @render_grid = TextureSheetGrid.new(@map, width: width, height: height, view_scale: @map.scale, montage: true, centered: false)
+          @render_grid = TextureSheetGrid.new(@map, width: width, height: height, view_scale: @map.scale, montage: true, centered: false, center_block: Block.from_real(0, 0))
 
           result_tool.scale(@map.scale, width, height)
         end

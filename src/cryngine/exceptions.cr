@@ -41,6 +41,8 @@ module Cryngine
 
     class RenderInvalidType < Exception; end
 
+    class RendererUninitialized < Exception; end
+
     # Sheets
   end
 end

@@ -40,6 +40,8 @@ module Cryngine
 
   alias Keyboard = Devices::Keyboard
 
+  alias Grid = Map::Grid
+
   class Map
   end
 

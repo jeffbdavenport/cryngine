@@ -38,10 +38,25 @@ module Cryngine
         Display::Window.window
       end
 
+      def self.ensure_initialized
+        raise RendererUninitialized.new("You must initialize the Window before calling this method") unless @@initialized
+      end
+
       def self.load_texture(path : String) : SDL::Texture
+        ensure_initialized
         receive = Channel(SDL::Texture).new(1)
         @@load_texture_channel.send({receive, path})
         receive.receive
+      end
+
+      def self.wait_for_render(grid : Grid, col = 0, row = 0)
+        ensure_initialized
+        until grid.sheet_exists?(0, 0)
+          if render_print_wait.waiting?
+            render_print_wait.send(nil)
+          end
+          sleep 100.microseconds
+        end
       end
 
       def self.initialize(game_title : String, width = WIDTH, height = HEIGHT, flags : SDL::Window::Flags = SDL::Window::Flags::SHOWN)
@@ -104,6 +119,7 @@ module Cryngine
 
           Loop.new(:render_sheet, same_thread: true) do
             render_type, reply_to, printables = render_sheets_channel.receive
+            Log.debug { "Got sheet" }
 
             render_print_wait.receive
 
@@ -129,6 +145,7 @@ module Cryngine
                     when RenderTypes::Pixels
                       surface_as_pixels(surface)
                     when RenderTypes::Texture
+                      LibSDL.set_color_key(surface, 1, LibSDL.map_rgb(surface.value.format, 255, 255, 255))
                       SDL::Texture.new(LibSDL.create_texture_from_surface(renderer, surface))
                     end
             raise RenderInvalidType.new("Unknown type #{render_type}") if sheet.nil?
