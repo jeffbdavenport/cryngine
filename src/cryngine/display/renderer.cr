@@ -22,7 +22,7 @@ module Cryngine
       class_getter clear_channel = Channel(Nil).new(1)
 
       @@mutex = Mutex.new
-      @@renderer = uninitialized Renderer
+      @@renderer = uninitialized SDL::Renderer
       @@surface = uninitialized Pointer(LibSDL::Surface)
       @@start_time : Float64 = Time.monotonic.total_seconds
       @@printed_frame = false
@@ -66,7 +66,7 @@ module Cryngine
           Display::Window.window = SDL::Window.new(game_title, width, height, flags: flags)
           sleep 100.milliseconds
           window.recalc_window_size
-          @@renderer = Renderer.new(window)
+          @@renderer = SDL::Renderer.new(window)
           @@surface = new_surface(renderer)
 
           Loop.new(:load_textures, same_thread: true) do

@@ -30,7 +30,9 @@ module Cryngine
 
           Log.debug { "Waiting to be allowed to Create Montage" }
           # Renderer.render_print_wait.receive
+          puts "Started"
           bmp_bytes = montage_full
+          render_grid.start_sheet(0_u16, 0_u16)
 
           Renderer.load_surface_channel.send({@receive_texture_channel, bmp_bytes})
           texture = @receive_texture_channel.receive
@@ -43,11 +45,13 @@ module Cryngine
         start_col.upto(end_col).each do |col|
           start_row.upto(end_row).each do |row|
             grid.start_sheet(col, row)
+            puts "Started #{col}, #{row}"
+            Log.debug { "Started #{col}, #{row}" }
             block = grid.block_for(col, row)
             spawn do
               create_sheet(block)
+              Log.debug { "Created #{col}, #{row}" }
             end
-            Log.debug { "Started #{col}, #{row}" }
           end
         end
       end
@@ -153,19 +157,21 @@ module Cryngine
         Log.debug { "Created Montage" }
         result_tool = DitherTool.new(wand)
 
-        puts "GetBoundsPixels: #{{start_col, start_row, end_col, end_row}}"
+        puts "bounds: #{@bounds}, GetBoundsPixels: #{{start_col, start_row, end_col, end_row}}"
         bounds = @bounds
-        width, height, top, left, right, bottom = if bounds
-                                                    bounds
-                                                  else
-                                                    get_bounds_pixels(start_col, start_row, end_col, end_row)
-                                                  end
-        puts "#{get_bounds_pixels(start_col, start_row, end_col, end_row)}"
-        LibMagick.magickCropImage(result_tool.wand, width, height, left, top)
+        # width, height, top, left, right, bottom = if bounds
+        #                                             bounds
+        #                                           else
+        #                                             get_bounds_pixels(start_col, start_row, end_col, end_row)
+        #                                           end
+        # puts "#{get_bounds_pixels(start_col, start_row, end_col, end_row)}"
+        # LibMagick.magickCropImage(result_tool.wand, width, height, left, top)
 
         if @dither
-          @render_grid = TextureSheetGrid.new(@map, width: (width * @map.scale).to_i, height: (height * @map.scale).to_i, tile_height: (@map.tile_height * @map.scale).to_u8, tile_width: (@map.tile_width * @map.scale).to_u8, montage: true, centered: false, center_block: Block.from_real(0, 0))
-          result_tool.scale(@map.scale, width, height)
+          # puts "w,h: #{(width * @map.scale).to_i}, #{(height * @map.scale).to_i}"
+          # @render_grid = TextureSheetGrid.new(@map, width: (width * @map.scale).to_i, height: (height * @map.scale).to_i, tile_height: (@map.tile_height * @map.scale).to_u8, tile_width: (@map.tile_width * @map.scale).to_u8, montage: true, centered: false, center_block: Block.from_real(0, 0))
+          @render_grid = TextureSheetGrid.new(@map, width: (@map.width * @map.tile_width).to_i, height: (@map.height * @map.tile_height).to_i, tile_height: (@map.tile_height * @map.scale).to_u8, tile_width: (@map.tile_width * @map.scale).to_u8, montage: true, centered: false, center_block: Block.from_real(0, 0))
+          result_tool.scale(1.0, @map.width.to_i, @map.height.to_i)
 
           Log.debug { "Scaled Montage" }
           Fiber.yield
@@ -173,9 +179,10 @@ module Cryngine
           Log.debug { "Dithered Montage" }
           # result_tool.save("dithered-draft-#{above}.bmp")
         else
-          @render_grid = TextureSheetGrid.new(@map, width: width, height: height, view_scale: @map.scale, montage: true, centered: false, center_block: Block.from_real(0, 0))
+          @render_grid = TextureSheetGrid.new(@map, width: @map.width.to_i * @map.tile_width, height: @map.height.to_i * @map.tile_height, view_scale: @map.scale, montage: true, centered: false, center_block: Block.from_real(0, 0))
 
-          result_tool.scale(@map.scale, width, height)
+          # result_tool.scale(@map.scale, width, height)
+          result_tool.scale(1.0, @map.width.to_i, @map.height.to_i)
         end
 
         # mutex.synchronize do

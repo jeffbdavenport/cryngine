@@ -16,6 +16,8 @@ module Cryngine
     getter layers : Hash(Int32, Layer) = {} of Int32 => Layer
     getter tile_height : UInt8
     getter tile_width : UInt8
+    getter width : UInt16
+    getter height : UInt16
 
     @tile_height = uninitialized UInt8
     @tile_width = uninitialized UInt8
@@ -67,6 +69,8 @@ module Cryngine
       end
       @tile_width = json["tilewidth"].as_i.to_u8
       @tile_height = json["tileheight"].as_i.to_u8
+      @width = json["width"].as_i.to_u16
+      @height = json["height"].as_i.to_u16
     end
 
     def get_tileset(id)
