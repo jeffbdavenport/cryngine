@@ -28,13 +28,13 @@ module Cryngine
         @sheets[block]
       end
 
-      def sheet_exists?(col : Int16, row : Int16)
+      def sheet_exists?(col : Int16, row : Int16) : Bool
         block = block_for(col, row)
-        @sheets[block_for(col, row)]?
+        @sheets[block_for(col, row)]? ? true : false
       end
 
-      def sheet_exists?(block : Block)
-        @sheets[block]?
+      def sheet_exists?(block : Block) : Bool
+        @sheets[block]? ? true : false
       end
 
       def present?

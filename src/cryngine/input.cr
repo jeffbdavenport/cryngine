@@ -16,15 +16,15 @@ module Cryngine
 
     class_property moved_time : Float64 = Time.monotonic.total_seconds
 
-    class_getter grid : TextureSheetGrid
-    @@grid = uninitialized TextureSheetGrid
+    class_getter map : Map
+    @@map = uninitialized Map
 
     def self.speed
       SPEED
     end
 
-    def self.rpg_2D_movement(grid : TextureSheetGrid)
-      @@grid = grid
+    def self.rpg_2D_movement(map : Map)
+      @@map = map
 
       # self.y
       # INPUT
@@ -58,9 +58,9 @@ module Cryngine
           next
         end
         sleep_amount = if y_velocity != 0
-                         (grid.map.scaled_tile_height/BOTH_XY_MOVE)/speed
+                         (map.scaled_tile_height/BOTH_XY_MOVE)/speed
                        else
-                         grid.map.scaled_tile_height/speed
+                         map.scaled_tile_height/speed
                        end
         # # puts "before Moving player"
         input_mover_channel.send({x_amount, 0_i16})
@@ -95,9 +95,9 @@ module Cryngine
           next
         end
         sleep_amount = if x_velocity != 0
-                         (grid.map.scaled_tile_width/BOTH_XY_MOVE)/speed
+                         (map.scaled_tile_width/BOTH_XY_MOVE)/speed
                        else
-                         grid.map.scaled_tile_width/speed
+                         map.scaled_tile_width/speed
                        end
 
         input_mover_channel.send({0_i16, y_amount})
@@ -116,8 +116,8 @@ module Cryngine
         self.moved_time = Time.monotonic.total_seconds
         self.x_velocity = x unless x == 0
         self.y_velocity = y unless y == 0
-        self.minus_x = (x * grid.map.scaled_tile_width).to_f unless x == 0
-        self.minus_y = (y * grid.map.scaled_tile_height).to_f unless y == 0
+        self.minus_x = (x * map.scaled_tile_width).to_f unless x == 0
+        self.minus_y = (y * map.scaled_tile_height).to_f unless y == 0
       end
     end
 

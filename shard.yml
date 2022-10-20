@@ -10,12 +10,14 @@ dependencies:
   msgpack:
     github: crystal-community/msgpack-crystal
   sdl:
-    path: /home/jeff/projects/sdl.cr
-  magickwand-crystal:
-    path: /home/jeff/projects/magickwand-crystal
+    # github: ysbaddaden/sdl.cr
+    path: /home/jeff/projects/crystal/sdl.cr
+  # magickwand-crystal:
+  #   #path: /home/jeff/projects/magickwand-crystal
+  #   github: blocknotes/magickwand-crystal
     # vulkan:
     #   path: /home/jeff/projects/vulkan.cr
 
-crystal: 1.1.1
+crystal: 1.6.0
 
 license: MIT

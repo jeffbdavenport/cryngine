@@ -22,12 +22,12 @@ module Cryngine
         @sheets[block]
       end
 
-      def sheet_exists?(col, row)
-        @sheets[block_for(col, row)]?
+      def sheet_exists?(col, row) : Bool
+        @sheets[block_for(col, row)]? ? true : false
       end
 
-      def sheet_exists?(block : Block)
-        @sheets[block]?
+      def sheet_exists?(block : Block) : Bool
+        @sheets[block]? ? true : false
       end
 
       def present?

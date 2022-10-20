@@ -31,8 +31,6 @@ module Cryngine
           Event.ignore EventType::FIRSTEVENT
           LibSDL.event_state(LibSDL::EventType::MOUSE_MOTION, LibSDL::IGNORE)
           LibSDL.event_state(LibSDL::EventType::WINDOW_EVENT, LibSDL::IGNORE)
-          # LibSDL.event_state(LibSDL::EventType::KEYDOWN, LibSDL::IGNORE)
-          # LibSDL.event_state(LibSDL::EventType::KEYUP, LibSDL::IGNORE)
           LibSDL.event_state(LibSDL::EventType::TEXT_EDITING, LibSDL::IGNORE)
           LibSDL.event_state(LibSDL::EventType::TEXT_INPUT, LibSDL::IGNORE)
           LibSDL.event_state(LibSDL::EventType::MOUSE_BUTTON_UP, LibSDL::IGNORE)
@@ -92,22 +90,22 @@ module Cryngine
                 nil
               end
 
-        if event.keydown?
-          if key_watch.has_key?(event.sym) && key_watch[event.sym] == true
-            puts "KEYUP NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}"
-            Log.error { "KEYUP NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}" }
-            Window.exit_channel.send(nil)
-          end
+        # if event.keydown?
+        #   if key_watch.has_key?(event.sym) && key_watch[event.sym] == true
+        #     puts "KEYUP NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}"
+        #     Log.error { "KEYUP NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}" }
+        #     Window.exit_channel.send(nil)
+        #   end
 
-          key_watch[event.sym] = true
-        else
-          if key_watch.has_key?(event.sym) && key_watch[event.sym] == false
-            puts "KEYDOWN NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}"
-            Log.error { "KEYDOWN NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}" }
-            Window.exit_channel.send(nil)
-          end
-          key_watch[event.sym] = false
-        end
+        #   key_watch[event.sym] = true
+        # else
+        #   if key_watch.has_key?(event.sym) && key_watch[event.sym] == false
+        #     puts "KEYDOWN NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}"
+        #     Log.error { "KEYDOWN NOT DETECTED FOR: #{key} #{event.sym}. Keywatch: #{key_watch[event.sym]}" }
+        #     Window.exit_channel.send(nil)
+        #   end
+        #   key_watch[event.sym] = false
+        # end
 
         if keymap.key_for?(event.sym)
           key = mutex.synchronize do

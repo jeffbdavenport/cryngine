@@ -1,4 +1,5 @@
 require "sdl"
+require "magickwand-crystal"
 
 module Cryngine
   module Display

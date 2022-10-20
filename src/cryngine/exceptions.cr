@@ -43,6 +43,8 @@ module Cryngine
 
     class RendererUninitialized < Exception; end
 
+    class NoTexturesToPrint < Exception; end
+
     # Sheets
   end
 end

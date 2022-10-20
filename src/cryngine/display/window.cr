@@ -1,4 +1,3 @@
-require "magickwand-crystal"
 require "sdl"
 require "sdl/lib_img"
 require "../map/tile"
@@ -93,14 +92,12 @@ module Cryngine
       end
 
       # UPDATE
-      def self.rpg_update_loop(grid : TextureSheetGrid)
-        Renderer.wait_for_render(grid, 0, 0)
-
+      def self.rpg_update_loop(grid : Cryngine::Map::TextureSheetGrid)
         # until grid.sheet_exists?(0, 0) && grid.sheet_exists?(0, 0)
         #   sleep 1.milliseconds
         # end
 
-        Input.rpg_2D_movement(grid)
+        Input.rpg_2D_movement(grid.map)
         last_frame = Time.monotonic.total_seconds
         prev_x = -1.0
         prev_y = -1.0
@@ -128,16 +125,16 @@ module Cryngine
             Player.block
           end
 
-          printables = [] of Tuple(Rect, SDL::Texture, Rect?)
+          printables = [] of Tuple(SDL::Texture, Rect, Rect?)
 
           current = Time.monotonic.total_seconds
           # (time = current - m_time)
           last_frame = current
 
-          if printed && Input.minus_x == 0 && Input.minus_y == 0 && Input.x_velocity == 0 && Input.y_velocity == 0
-            Renderer.render_channel.send(printables)
-            next
-          end
+          # if printed && Input.minus_x == 0 && Input.minus_y == 0 && Input.x_velocity == 0 && Input.y_velocity == 0
+          #   Renderer.render_channel.send(printables)
+          #   next
+          # end
 
           prev_x = Input.minus_x
           prev_y = Input.minus_y
@@ -149,6 +146,7 @@ module Cryngine
           #   next
           # end
 
+          raise NoTexturesToPrint.new unless printables.any?
           Renderer.render_channel.send(printables)
 
           Input.after_print_player_move

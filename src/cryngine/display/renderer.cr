@@ -11,7 +11,7 @@ module Cryngine
       BMP_HEADER_SIZE = 54
       class_getter renderer : SDL::Renderer
       class_getter surface : Pointer(LibSDL::Surface)
-      class_getter render_channel = Channel(Array(Tuple(Rect, SDL::Texture, Rect?))).new(1)
+      class_getter render_channel = Channel(Array(Tuple(SDL::Texture, Rect, Rect?))).new(1)
       class_getter render_sheets_channel = Channel(Tuple(RenderTypes, Channel(TextureType), Array(Tuple(SDL::Texture, Rect, Rect)))).new(9)
       class_getter publish_made_sheets_channel = Channel(Tuple(Channel(SDL::Texture), Pointer(LibSDL::Surface))).new(9)
       class_getter cleanup_channel = Channel(Pointer(LibSDL::Surface)).new(1)
@@ -49,9 +49,20 @@ module Cryngine
         receive.receive
       end
 
-      def self.wait_for_render(grid : Grid, col = 0, row = 0)
+      def self.wait_for_render(mm : MontageMaker, col = 0_i16, row = 0_i16)
         ensure_initialized
-        until grid.sheet_exists?(0, 0)
+        until mm.render_grid.sheet_exists?(col, row)
+          if render_print_wait.waiting?
+            render_print_wait.send(nil)
+          end
+          sleep 100.microseconds
+        end
+      end
+
+      def self.wait_for_render(grid : Grid, col = 0_i16, row = 0_i16)
+        ensure_initialized
+        until grid.sheet_exists?(col, row)
+          Log.debug { "#{grid}" }
           if render_print_wait.waiting?
             render_print_wait.send(nil)
           end
@@ -65,7 +76,7 @@ module Cryngine
         spawn do
           Display::Window.window = SDL::Window.new(game_title, width, height, flags: flags)
           sleep 100.milliseconds
-          window.recalc_window_size
+          # window.recalc_window_size
           @@renderer = SDL::Renderer.new(window)
           @@surface = new_surface(renderer)
 
@@ -79,7 +90,8 @@ module Cryngine
           start_time = Time.monotonic.total_seconds
           Loop.new(:render, same_thread: true) do
             textures = render_channel.receive
-            textures.each do |rect, texture, clip_rect|
+            raise NoTexturesToPrint.new unless textures.any?
+            textures.each do |texture, rect, clip_rect|
               renderer.viewport = rect
               if clip_rect
                 renderer.copy(texture.to_unsafe, clip_rect)
@@ -174,8 +186,8 @@ module Cryngine
 
           Loop.new(:publish_made_sheets, same_thread: true) do
             reply_to, surface = publish_made_sheets_channel.receive
-            Log.debug { "Publishing Texture" }
             render_print_wait.receive
+            Log.debug { "Publishing Texture" }
 
             LibSDL.set_color_key(surface, 1, LibSDL.map_rgb(surface.value.format, 255, 255, 255))
             texture = LibSDL.create_texture_from_surface(renderer, surface)
@@ -198,7 +210,7 @@ module Cryngine
       private def self.copy_renderer_to_surface(renderer, surface)
         rect = Rect.new(0, 0, window.width.to_i, window.height.to_i)
         renderer.viewport = rect
-        renderer.read_pixels(rect, surface)
+        renderer.read_pixels(rect, surface.value.format, surface)
       end
 
       private def self.surface_as_pixels(surface)

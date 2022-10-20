@@ -71,7 +71,7 @@ module Cryngine
       end
 
       # Make array of printable objects the renderer can understand
-      private def process_make_sheet(pivot_block : Block)
+      def process_make_sheet(pivot_block : Block, printables = [] of Tuple(SDL::Texture, Rect, Rect))
         # Adjsut the camera so the player is in the center
 
         @top = nil
@@ -80,8 +80,6 @@ module Cryngine
         @bottom = nil
         screen_cols = frame.cols - 1_u8
         screen_rows = frame.rows - 1_u8
-
-        printables = [] of Tuple(SDL::Texture, Rect, Rect)
 
         Log.debug { "Making Sheet: #{pivot_block.real}" }
 
