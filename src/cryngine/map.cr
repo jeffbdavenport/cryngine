@@ -69,8 +69,10 @@ module Cryngine
       end
       @tile_width = json["tilewidth"].as_i.to_u8
       @tile_height = json["tileheight"].as_i.to_u8
-      @width = json["width"].as_i.to_u16
-      @height = json["height"].as_i.to_u16
+      @width = 0
+      @height = 0
+      # @width = json["width"].as_i.to_u16
+      # @height = json["height"].as_i.to_u16
     end
 
     def get_tileset(id)

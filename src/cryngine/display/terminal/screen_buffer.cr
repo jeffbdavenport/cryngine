@@ -9,7 +9,7 @@ module Cryngine
         class_property buffer = {} of String => String
         @@ephemeral_buffer = ""
         # How long to wait before printing again
-        PRINT_DELAY = 50.milliseconds
+        PRINT_DELAY = 5.milliseconds
 
         def initialize
           Loop.new(:loop_counts, false) do
@@ -17,9 +17,9 @@ module Cryngine
             print "#{ephemeral_buffer}#{buffer.values.join}#{Terminal.reset_cursor}"
           end
 
-          # Loop.new(:channel) do
-          #   puts buffer_channel.receive
-          # end
+          Loop.new(:print_screen_channel) do
+            puts buffer_channel.receive
+          end
         end
 
         def puts(string : String)

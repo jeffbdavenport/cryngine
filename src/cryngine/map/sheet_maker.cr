@@ -6,6 +6,8 @@ require "../display/renderer"
 
 module Cryngine
   class Map
+    alias Renderer = Display::Renderer
+
     class SheetMaker
       getter render_grid : TextureSheetGrid
 
@@ -72,7 +74,7 @@ module Cryngine
 
       # Make array of printable objects the renderer can understand
       def process_make_sheet(pivot_block : Block, printables = [] of Tuple(SDL::Texture, Rect, Rect))
-        # Adjsut the camera so the player is in the center
+        # Adjust the camera so the player is in the center
 
         @top = nil
         @left = nil

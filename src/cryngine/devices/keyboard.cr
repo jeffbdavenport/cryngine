@@ -5,6 +5,7 @@ module Cryngine
   module Devices
     module Keyboard
       include SDL
+      alias Display = Cryngine::Display
       alias Window = Display::Window
       alias Scancode = LibSDL::Scancode
       alias Keycode = LibSDL::Keycode
@@ -24,7 +25,8 @@ module Cryngine
         :right => Scancode::F,
       } of Symbol => Keycode | Scancode
 
-      def self.initialize
+      def self.initialize(exit_channel)
+        @@exit_channel = exit_channel
         spawn do
           Event.ignore EventType::TEXT_INPUT
           Event.ignore EventType::TEXT_EDITING
@@ -128,19 +130,21 @@ module Cryngine
           # Log.error { "Error! No key_for Keyboard Event: #{event.to_unsafe.value.key}" }
         end
 
-        case event.sym
-        when Keycode::ESCAPE
-          Window.exit_channel.send(nil)
+        if event.keydown?
+          case event.sym
+          when Keycode::ESCAPE
+            Window.exit_channel.send(nil)
+          end
         end
       end
 
       def self.process_event(event)
         case event.type
         when EventType::QUIT, EventType::APP_TERMINATING, Event::Quit
-          Display::Window.exit_channel.send(nil)
-        when EventType::TEXT_INPUT
+          Window.exit_channel.send(nil)
+        when EventType::TEXT_INPUT, EventType::TEXT_EDITING
         else
-          puts event.type
+          puts "Unknown Event ", event.type
         end
       end
     end

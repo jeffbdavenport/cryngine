@@ -21,6 +21,15 @@ module Cryngine
       Log.error { "#{self.class} closed!" }
     end
 
+    def listen_string
+      while !socket.closed?
+        message, address = socket.receive(1024)
+        yield(message, address)
+        # authorize(request)
+      end
+      Log.error { "#{self.class} closed!" }
+    end
+
     private def authorize(request)
       @receiver.authorize(request) unless request.authorized?
       if request.authorized?

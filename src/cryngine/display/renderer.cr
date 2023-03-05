@@ -1,10 +1,19 @@
 require "./window"
+require "cryngine/map/montage_maker"
 
 module Cryngine
   module Display
+    alias MontageMaker = Map::MontageMaker
+    alias Grid = Map::Grid
+    alias Block = Map::Block
+
+    module Window
+    end
+
     module Renderer
       include SDL
       # If this is not here Window refers to SDL::Window
+      alias Display = Cryngine::Display
       alias Window = Display::Window
 
       BIT_DEPTH       = 24
@@ -129,6 +138,7 @@ module Cryngine
             end
           end
 
+          print_count = 0
           Loop.new(:render_sheet, same_thread: true) do
             render_type, reply_to, printables = render_sheets_channel.receive
             Log.debug { "Got sheet" }
@@ -138,17 +148,18 @@ module Cryngine
             mutex.synchronize do
               Log.debug { "DO   - RENDERING Above" }
 
-              LibSDL.set_render_draw_color(renderer, 255, 255, 255, 0)
+              LibSDL.set_render_draw_color(renderer, 255, 255, 255, 255)
               renderer.clear
 
               printables.each do |texture, view_rect, clip|
                 renderer.viewport = view_rect
-                renderer.copy texture, clip
+                renderer.copy texture.to_unsafe, clip
               end
               copy_renderer_to_surface(renderer, surface)
               renderer.clear
             end
-            # LibIMG.save_png surface, "rendered#{col},#{row}.png"
+            # LibIMG.save_png surface, "rendered-#{print_count}.png"
+            print_count += 1
             Log.debug { "DONE - RENDERING Above" }
 
             render_print_wait.receive
@@ -210,7 +221,8 @@ module Cryngine
       private def self.copy_renderer_to_surface(renderer, surface)
         rect = Rect.new(0, 0, window.width.to_i, window.height.to_i)
         renderer.viewport = rect
-        renderer.read_pixels(rect, surface.value.format, surface)
+        pitch = rect.w * PixelFormat.new(surface.value.format).bytes_per_pixel
+        LibSDL.render_read_pixels(renderer.to_unsafe, pointerof(rect), PixelFormat.new(surface.value.format).format, surface.value.pixels, pitch)
       end
 
       private def self.surface_as_pixels(surface)
@@ -225,6 +237,7 @@ module Cryngine
       end
 
       private def self.load_img_texture(path : String)
+        Log.debug { "loadIMG path: #{path}" }
         surface = LibIMG.load path
         if !surface
           raise SDL::Error.new("Unable to load image") # {LibSDL.get_error.value}\n"
@@ -232,7 +245,7 @@ module Cryngine
 
         texture = LibSDL.create_texture_from_surface(renderer, surface)
 
-        # puts texture.value.pixels
+        # Log.debug { texture.value.pixels }
 
         LibSDL.free_surface surface
         Texture.new(texture)

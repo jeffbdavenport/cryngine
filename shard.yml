@@ -7,14 +7,15 @@ authors:
 dependencies:
   granite:
     github: amberframework/granite
+    branch: master
   msgpack:
     github: crystal-community/msgpack-crystal
   sdl:
     # github: ysbaddaden/sdl.cr
     path: /home/jeff/projects/crystal/sdl.cr
-  # magickwand-crystal:
-  #   #path: /home/jeff/projects/magickwand-crystal
-  #   github: blocknotes/magickwand-crystal
+  magickwand-crystal:
+    # path: /home/jeff/projects/magickwand-crystal
+    github: blocknotes/magickwand-crystal
     # vulkan:
     #   path: /home/jeff/projects/vulkan.cr
 

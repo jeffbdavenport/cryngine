@@ -3,7 +3,7 @@ module Cryngine
     class TextureSheetGrid < Grid
       @sheets : Hash(Block, TextureSheet) = {} of Block => TextureSheet
 
-      @render_type = Renderer::RenderTypes::Texture
+      @render_type = Display::Renderer::RenderTypes::Texture
 
       struct TextureSheet < Sheet
         getter sheet : SDL::Texture

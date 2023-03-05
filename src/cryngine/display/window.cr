@@ -29,6 +29,8 @@ end
 module Cryngine
   module Display
     module Window
+      alias Player = Map::Player
+
       class_property window : SDL::Window
       @@window = uninitialized SDL::Window
       @@sheet = uninitialized Map::Sheet
@@ -83,12 +85,24 @@ module Cryngine
         #   # end
         # end
         spawn do
+          puts("test")
           exit_channel.receive
+          # cleanup_channel.send(nil)
           # SheetMaker.cleanup
           @@exit = true
         end
 
         true
+      end
+
+      # UPDATE
+      def self.one_screen_update_loop
+        loop do
+          break if @@exit
+
+          yield
+          Fiber.yield
+        end
       end
 
       # UPDATE

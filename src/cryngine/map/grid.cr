@@ -1,8 +1,10 @@
 require "./frame"
+require "../display/renderer"
 
 module Cryngine
   class Map
     abstract class Grid
+      alias Window = Display::Window
       getter mutex = Mutex.new
 
       include Exceptions
@@ -19,7 +21,7 @@ module Cryngine
       getter x_between_distance : Int16
       getter y_between_distance : Int16
 
-      getter render_type = Renderer::RenderTypes::Pixels
+      getter render_type = Display::Renderer::RenderTypes::Pixels
 
       getter col_adjust : UInt16
       getter row_adjust : UInt16

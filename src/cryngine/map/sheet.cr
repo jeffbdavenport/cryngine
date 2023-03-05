@@ -1,6 +1,7 @@
 module Cryngine
   class Map
     abstract struct Sheet
+      alias Window = Display::Window
       getter grid
 
       property top, left, right, bottom
@@ -47,11 +48,11 @@ module Cryngine
       end
 
       def x_from_offset(real_x, tile_width, minus_x)
-        self.class.coord_from_offset(real_x, offset_x, tile_width, minus_x)
+        self.class.coord_from_offset(real_x, offset_x, tile_width, minus_x) # - grid.col_adjust)
       end
 
       def y_from_offset(real_y, tile_height, minus_y)
-        self.class.coord_from_offset(real_y, offset_y, tile_height, minus_y)
+        self.class.coord_from_offset(real_y, offset_y, tile_height, minus_y) # - grid.row_adjust)
       end
 
       # def sheet_x_offset(sheet_pixels_width)
@@ -148,7 +149,7 @@ module Cryngine
 
         rect_x = 0 if rect_x < 0
         rect_y = 0 if rect_y < 0
-        clip = Rect.new(rect_x, rect_y, clip_width, clip_height)
+        clip = Rect.new(rect_x - 26 * 32, rect_y - 26 * 32 - 16, clip_width, clip_height)
 
         view_x = 0 if view_x < 0
         view_y = 0 if view_y < 0

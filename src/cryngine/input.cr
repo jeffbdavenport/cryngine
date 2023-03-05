@@ -1,5 +1,8 @@
 module Cryngine
   private module Input
+    alias Window = Display::Window
+    alias Keyboard = Devices::Keyboard
+    alias Player = Map::Player
     # Seems too slow, but is the exact distance for a circle
     # BOTH_XY_MOVE = 0.7066666666666667
     BOTH_XY_MOVE = 0.77

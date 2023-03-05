@@ -34,6 +34,10 @@ module Cryngine
     def send(command : Enum, data)
       @connection.send(command, data)
     end
+
+    def send(data)
+      @connection.send(data)
+    end
   end
 
   class ClientCommand

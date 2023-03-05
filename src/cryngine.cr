@@ -1,4 +1,5 @@
 require "cryngine/exceptions"
+require "sdl"
 
 ENV["EVENT_PRECISE_TIMER"] = "1"
 ENV["CRYSTAL_WORKERS"] = "16"
@@ -7,10 +8,10 @@ lib C
   fun usleep(useconds_t : Int32) : Int32
 end
 
-USLEEP = 1_000_000
+MSLEEP = 1_000
 
-def usleep(time)
-  C.usleep (time * USLEEP).to_i
+def usleep(time : Int32)
+  C.usleep(time)
 end
 
 module Cryngine
@@ -24,23 +25,23 @@ module Cryngine
 
   alias Rect = SDL::Rect
 
-  alias Player = Map::Player
-  alias Sheet = Map::Sheet
-  alias Block = Map::Block
-  alias SheetGrid = Map::SheetGrid
-  alias TextureSheetGrid = Map::TextureSheetGrid
-  alias Chunk = Map::Chunk
-  alias CollisionMap = Map::CollisionMap
-  alias Collider = Map::Collider
-  alias SheetMaker = Map::SheetMaker
+  # alias Player = Map::Player
+  # alias Sheet = Map::Sheet
+  # alias Block = Map::Block
+  # alias SheetGrid = Map::SheetGrid
+  # alias TextureSheetGrid = Map::TextureSheetGrid
+  # alias Chunk = Map::Chunk
+  # alias CollisionMap = Map::CollisionMap
+  # alias Collider = Map::Collider
+  # alias SheetMaker = Map::SheetMaker
 
-  alias Window = Display::Window
-  alias Renderer = Display::Renderer
-  alias DitherTool = Display::DitherTool
+  # alias Window = Display::Window
+  # alias Renderer = Display::Renderer
+  # alias DitherTool = Display::DitherTool
 
-  alias Keyboard = Devices::Keyboard
+  # alias Keyboard = Devices::Keyboard
 
-  alias Grid = Map::Grid
+  # alias Grid = Map::Grid
 
   class Map
   end

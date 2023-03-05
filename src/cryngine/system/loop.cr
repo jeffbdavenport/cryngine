@@ -12,7 +12,7 @@ module Cryngine
       getter channel : Channel(String)?
       class_property buffer = {} of String => String
       @index = 0
-      @@display_loop_counts = false
+      class_property display_loop_counts = false
 
       def self.counts
         @@display_loop_counts = true

@@ -4,6 +4,8 @@ require "json"
 module Cryngine
   class Map
     class Tileset
+      alias Display = Cryngine::Display
+      alias Renderer = Display::Renderer
       class_property path = "./tiled/tilesets/"
 
       getter texture : SDL::Texture

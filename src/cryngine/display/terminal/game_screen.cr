@@ -1,5 +1,5 @@
 require "./screen_buffer"
-require "./window"
+require "./terminal_window"
 require "./game_char"
 
 module Cryngine
