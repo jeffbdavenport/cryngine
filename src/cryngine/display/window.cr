@@ -127,7 +127,8 @@ module Cryngine
           sleep_amount = ((1/FPS) - (current - last_frame))
           if sleep_amount.positive?
             # Log.debug { "Sleep - #{sleep_amount}" }
-            usleep(sleep_amount)
+            # usleep(sleep_amount)
+            sleep sleep_amount.microseconds
             slept = true
           end
           Log.debug { "Did not sleep" } unless slept

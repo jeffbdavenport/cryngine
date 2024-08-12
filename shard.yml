@@ -12,7 +12,7 @@ dependencies:
     github: crystal-community/msgpack-crystal
   sdl:
     # github: ysbaddaden/sdl.cr
-    path: /home/jeff/projects/crystal/sdl.cr
+    path: ../sdl.cr
   magickwand-crystal:
     # path: /home/jeff/projects/magickwand-crystal
     github: blocknotes/magickwand-crystal

@@ -25,8 +25,8 @@ module Cryngine
         :right => Scancode::F,
       } of Symbol => Keycode | Scancode
 
-      def self.initialize(exit_channel)
-        @@exit_channel = exit_channel
+      def self.initialize # (exit_channel)
+        # @@exit_channel = exit_channel
         spawn do
           Event.ignore EventType::TEXT_INPUT
           Event.ignore EventType::TEXT_EDITING
@@ -130,11 +130,10 @@ module Cryngine
           # Log.error { "Error! No key_for Keyboard Event: #{event.to_unsafe.value.key}" }
         end
 
-        if event.keydown?
-          case event.sym
-          when Keycode::ESCAPE
-            Window.exit_channel.send(nil)
-          end
+        return unless event.keydown?
+        case event.sym
+        when Keycode::ESCAPE
+          Window.exit_channel.send(nil)
         end
       end
 
